@@ -1,13 +1,9 @@
-use std::{collections::HashMap, str::FromStr};
+use std::collections::HashMap;
 
 use assert_float_eq::assert_float_absolute_eq as assert_eq_float;
-use cucumber::{
-    Parameter, World as _,
-    codegen::anyhow::{Error, Ok},
-    given, then,
-};
+use cucumber::{World as _, given, then};
 
-use rpov::{Float, Plus, PointOrVector, Tuple, make_point, make_vector, parse_tuple4};
+use rpov::{Float, Plus, PointOrVector, Tuple, make_point, make_vector};
 
 #[derive(Debug, Default, cucumber::World)]
 struct TheWorld {
