@@ -110,8 +110,6 @@ pub trait PlusMinus: Neg + Mul<Float, Output = Self> + Div<f32, Output = Self> {
     fn minus(self, other: Self) -> Self;
 }
 impl PlusMinus for Tuple {
-    // type Output = Self;
-
     fn plus(self, other: Self) -> Self {
         Tuple {
             x: self.x + other.x,
@@ -157,7 +155,6 @@ impl std::ops::Div<Float> for Tuple {
     }
 }
 
-// Implement Neg for Tuple
 impl std::ops::Neg for Tuple {
     type Output = Tuple;
 
