@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use assert_float_eq::assert_float_absolute_eq as assert_eq_float;
 use cucumber::{World as _, given, then};
 
-use rpov::{Float, Plus, PointOrVector, Tuple, make_point, make_vector};
+use rpov::{Float, PlusMinus, PointOrVector, Tuple, make_point, make_vector};
 
 #[derive(Debug, Default, cucumber::World)]
 struct TheWorld {
@@ -67,12 +67,55 @@ fn p_assign_vector(world: &mut TheWorld, var: String, x: Float, y: Float, z: Flo
     let v = make_vector(x, y, z);
     assert!(v.is_vector());
     world.vars.insert(var, v);
-    // Write code here that turns the phrase above into concrete actions
+}
+
+#[then(expr = r"{word} - {word} = vector\({float}, {float}, {float}\)")]
+fn p_x_minus_y_equals_vector(
+    world: &mut TheWorld,
+    a: String,
+    b: String,
+    x: Float,
+    y: Float,
+    z: Float,
+) {
+    let found_a = world.vars.get(&a).unwrap();
+    let found_b = world.vars.get(&b).unwrap();
+    let actual = found_a.minus(*found_b);
+    assert!(actual.is_vector());
+    assert_eq_float!(actual.x, x);
+    assert_eq_float!(actual.y, y);
+    assert_eq_float!(actual.z, z);
+}
+#[then(expr = r"{word} - {word} = point\({float}, {float}, {float}\)")]
+fn p_x_minus_y_equals_point(
+    world: &mut TheWorld,
+    a: String,
+    b: String,
+    x: Float,
+    y: Float,
+    z: Float,
+) {
+    let found_a = world.vars.get(&a).unwrap();
+    let found_b = world.vars.get(&b).unwrap();
+    let actual = found_a.minus(*found_b);
+    assert!(actual.is_point());
+    assert_eq_float!(actual.x, x);
+    assert_eq_float!(actual.y, y);
+    assert_eq_float!(actual.z, z);
 }
 
 #[then(expr = r"{word} = {tuple}")]
 fn var_eq_tuple(world: &mut TheWorld, var: String, given: Tuple) {
-    let found = world.vars.get(&var).unwrap();
+    let negate = var.starts_with("-");
+    let var = if negate {
+        var.trim_start_matches('-').to_string()
+    } else {
+        var
+    };
+    let mut found = *world.vars.get(&var).unwrap();
+    if negate {
+        found = -found;
+    }
     assert_eq_float!(found.x, given.x);
     assert_eq_float!(found.y, given.y);
     assert_eq_float!(found.z, given.z);

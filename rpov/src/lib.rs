@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{ops::Neg, str::FromStr};
 
 use cucumber::{Parameter, parser::Error};
 use num_traits::AsPrimitive;
@@ -50,10 +50,11 @@ impl FromStr for Tuple {
     }
 }
 
-pub trait Plus {
+pub trait PlusMinus: Neg {
     fn plus(self, other: Self) -> Self;
+    fn minus(self, other: Self) -> Self;
 }
-impl Plus for Tuple {
+impl PlusMinus for Tuple {
     // type Output = Self;
 
     fn plus(self, other: Self) -> Self {
@@ -62,6 +63,15 @@ impl Plus for Tuple {
             y: self.y + other.y,
             z: self.z + other.z,
             w: self.w + other.w,
+        }
+    }
+
+    fn minus(self, other: Self) -> Self {
+        Tuple {
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z,
+            w: self.w - other.w,
         }
     }
 }
@@ -78,6 +88,20 @@ impl PointOrVector for RawTuple4 {
 
     fn is_vector(&self) -> bool {
         self.3 as Int == W_VECTOR as Int
+    }
+}
+
+// Implement Neg for Tuple
+impl std::ops::Neg for Tuple {
+    type Output = Tuple;
+
+    fn neg(self) -> Tuple {
+        Tuple {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+            w: -self.w,
+        }
     }
 }
 impl PointOrVector for Tuple {
@@ -126,7 +150,7 @@ pub fn parse_tuple4(s: &str) -> Result<RawTuple4, &str> {
 
 #[cfg(test)]
 mod test {
-    use crate::Plus;
+    use crate::PlusMinus;
     use crate::make_tuple;
     use crate::parse_tuple4;
 

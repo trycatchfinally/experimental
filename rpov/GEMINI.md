@@ -29,6 +29,7 @@ This is a Rust project that implements a ray tracer. The goal is to create a sim
 * Add comments to explain complex logic.
 * Don't add comments that duplicate what the code says.
 * Do not write organizational or comments that summarize the code.
+* Do not write comments like "// Implement Neg for Tuple".
 * Prioritize code correctness and clarity. Speed and efficiency are secondary priorities unless otherwise specified.
 * Never create files with `mod.rs` paths - prefer `src/some_module.rs` instead of `src/some_module/mod.rs`.
 
