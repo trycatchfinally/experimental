@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use assert_float_eq::assert_float_absolute_eq as assert_eq_float;
-use cucumber::{World as _, given, then};
+use cucumber::{World as _, given, then, when};
 
 use rpov::{Float, PlusMinus, PointOrVector, Tuple, make_point, make_vector};
 
@@ -159,4 +159,88 @@ fn var_times_float_tuple(world: &mut TheWorld, var: String, f: Float, expected: 
     assert_eq_float!(actual.y, expected.y);
     assert_eq_float!(actual.z, expected.z);
     assert_eq_float!(actual.w, expected.w);
+}
+
+#[then(expr = r"{word} \/ {float} = {tuple}")]
+fn var_div_float_tuple(world: &mut TheWorld, var: String, f: Float, expected: Tuple) {
+    let found = world.get(&var);
+    let actual = found / f;
+    assert_eq_float!(actual.x, expected.x);
+    assert_eq_float!(actual.y, expected.y);
+    assert_eq_float!(actual.z, expected.z);
+    assert_eq_float!(actual.w, expected.w);
+}
+
+#[then(expr = r"magnitude\({word}\) = {float}")]
+fn magnitude_var_float(world: &mut TheWorld, var: String, expected: Float) {
+    let found = world.get(&var);
+    let actual = found.magnitude();
+    assert_eq_float!(actual, expected);
+}
+
+#[then(expr = r"magnitude\({word}\) = √{float}")]
+fn magnitude_var_sqrt_float(world: &mut TheWorld, var: String, expected: Float) {
+    magnitude_var_float(world, var, expected.sqrt());
+}
+
+#[then(expr = r"normalize\({word}\) =( approximately) vector\({float}, {float}, {float}\)")]
+fn normalize_eq_vector(world: &mut TheWorld, var: String, x: Float, y: Float, z: Float) {
+    let found = world.get(&var);
+    let actual = found.normalize();
+    assert!(actual.is_vector());
+    assert_eq_float!(actual.x, x, 1e-4);
+    assert_eq_float!(actual.y, y, 1e-4);
+    assert_eq_float!(actual.z, z, 1e-4);
+}
+
+#[when(expr = r"{word} ← normalize\({word}\)")]
+fn norm_normalize_v(world: &mut TheWorld, var: String, input: String) {
+    let found = world.get(&input);
+    let normalized = found.normalize();
+    world.insert(var, normalized);
+}
+
+#[then(expr = r"dot\({word}, {word}\) = {float}")]
+fn dot_a_b_equals_f(world: &mut TheWorld, a: String, b: String, expected: Float) {
+    let found_a = world.get(&a);
+    let found_b = world.get(&b);
+    let actual = found_a.dot(found_b);
+    assert_eq_float!(actual, expected);
+}
+
+#[then(expr = r"cross\({word}, {word}\) = vector\({float}, {float}, {float}\)")]
+fn cross_a_b_equals_vector(
+    world: &mut TheWorld,
+    a: String,
+    b: String,
+    x: Float,
+    y: Float,
+    z: Float,
+) {
+    let expected = make_vector(x, y, z);
+    let found_a = world.get(&a);
+    let found_b = world.get(&b);
+    let actual = found_a.cross(found_b);
+    assert!(actual.is_vector());
+    assert_eq_float!(actual.x, expected.x);
+    assert_eq_float!(actual.y, expected.y);
+    assert_eq_float!(actual.z, expected.z);
+}
+
+#[when(expr = r"{word} ← reflect\({word}, {word}\)")]
+fn r_reflect_v_n(world: &mut TheWorld, dest: String, v: String, n: String) {
+    let found_v = world.get(&v);
+    let found_n = world.get(&n);
+    let reflected = found_v.reflect(found_n);
+    world.insert(dest, reflected);
+}
+
+#[then(expr = r"value\({word}\) = vector\({float}, {float}, {float}\)")]
+fn r_eq_vector(world: &mut TheWorld, var: String, x: Float, y: Float, z: Float) {
+    let found = world.get(&var);
+    let expected = make_vector(x, y, z);
+    assert!(found.is_vector());
+    assert_eq_float!(found.x, expected.x);
+    assert_eq_float!(found.y, expected.y);
+    assert_eq_float!(found.z, expected.z);
 }

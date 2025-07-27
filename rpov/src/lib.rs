@@ -1,5 +1,5 @@
 use std::{
-    ops::{Mul, Neg},
+    ops::{Div, Mul, Neg},
     str::FromStr,
 };
 
@@ -40,6 +40,58 @@ pub struct Tuple {
     pub w: Float,
 }
 
+impl Tuple {
+    pub fn new(x: Float, y: Float, z: Float, w: Float) -> Self {
+        Tuple { x, y, z, w }
+    }
+
+    pub fn magnitude(&self) -> Float {
+        (self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w).sqrt()
+    }
+
+    pub fn normalize(&self) -> Tuple {
+        let mag = self.magnitude();
+        if mag == 0.0 {
+            panic!("Cannot normalize a zero vector");
+        }
+        Tuple {
+            x: self.x / mag,
+            y: self.y / mag,
+            z: self.z / mag,
+            w: self.w / mag,
+        }
+    }
+
+    pub fn dot(&self, other: Tuple) -> Float {
+        self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w
+    }
+
+    pub fn cross(&self, other: Tuple) -> Tuple {
+        assert!(
+            self.is_vector() && other.is_vector(),
+            "Cross product is only defined for vectors"
+        );
+        make_vector(
+            self.y * other.z - self.z * other.y,
+            self.z * other.x - self.x * other.z,
+            self.x * other.y - self.y * other.x,
+        )
+    }
+
+    pub fn reflect(&self, normal: Tuple) -> Tuple {
+        assert!(
+            self.is_vector() && normal.is_vector(),
+            "Reflection is only defined for vectors"
+        );
+        let dot_product = self.dot(normal);
+        make_vector(
+            self.x - 2.0 * dot_product * normal.x,
+            self.y - 2.0 * dot_product * normal.y,
+            self.z - 2.0 * dot_product * normal.z,
+        )
+    }
+}
+
 impl FromStr for Tuple {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -53,7 +105,7 @@ impl FromStr for Tuple {
     }
 }
 
-pub trait PlusMinus: Neg + Mul<Float, Output = Self> {
+pub trait PlusMinus: Neg + Mul<Float, Output = Self> + Div<f32, Output = Self> {
     fn plus(self, other: Self) -> Self;
     fn minus(self, other: Self) -> Self;
 }
@@ -88,6 +140,19 @@ impl std::ops::Mul<Float> for Tuple {
             y: self.y * other,
             z: self.z * other,
             w: self.w * other,
+        }
+    }
+}
+
+impl std::ops::Div<Float> for Tuple {
+    type Output = Tuple;
+
+    fn div(self, other: Float) -> Tuple {
+        Tuple {
+            x: self.x / other,
+            y: self.y / other,
+            z: self.z / other,
+            w: self.w / other,
         }
     }
 }
