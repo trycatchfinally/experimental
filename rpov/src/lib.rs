@@ -1,4 +1,7 @@
-use std::{ops::Neg, str::FromStr};
+use std::{
+    ops::{Mul, Neg},
+    str::FromStr,
+};
 
 use cucumber::{Parameter, parser::Error};
 use num_traits::AsPrimitive;
@@ -50,7 +53,7 @@ impl FromStr for Tuple {
     }
 }
 
-pub trait PlusMinus: Neg {
+pub trait PlusMinus: Neg + Mul<Float, Output = Self> {
     fn plus(self, other: Self) -> Self;
     fn minus(self, other: Self) -> Self;
 }
@@ -76,18 +79,16 @@ impl PlusMinus for Tuple {
     }
 }
 
-pub trait PointOrVector {
-    fn is_point(&self) -> bool;
-    fn is_vector(&self) -> bool;
-}
+impl std::ops::Mul<Float> for Tuple {
+    type Output = Tuple;
 
-impl PointOrVector for RawTuple4 {
-    fn is_point(&self) -> bool {
-        self.3 as Int == W_POINT as Int
-    }
-
-    fn is_vector(&self) -> bool {
-        self.3 as Int == W_VECTOR as Int
+    fn mul(self, other: Float) -> Tuple {
+        Tuple {
+            x: self.x * other,
+            y: self.y * other,
+            z: self.z * other,
+            w: self.w * other,
+        }
     }
 }
 
@@ -104,6 +105,22 @@ impl std::ops::Neg for Tuple {
         }
     }
 }
+
+pub trait PointOrVector {
+    fn is_point(&self) -> bool;
+    fn is_vector(&self) -> bool;
+}
+
+impl PointOrVector for RawTuple4 {
+    fn is_point(&self) -> bool {
+        self.3 as Int == W_POINT as Int
+    }
+
+    fn is_vector(&self) -> bool {
+        self.3 as Int == W_VECTOR as Int
+    }
+}
+
 impl PointOrVector for Tuple {
     fn is_point(&self) -> bool {
         self.w as Int == W_POINT as Int

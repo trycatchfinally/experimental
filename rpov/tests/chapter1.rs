@@ -10,14 +10,41 @@ struct TheWorld {
     vars: HashMap<String, Tuple>,
 }
 
+impl TheWorld {
+    fn get(&self, var: &str) -> Tuple {
+        // If the variable starts with a '-', negate the value
+        if var.starts_with('-') {
+            let var = var.trim_start_matches('-');
+            -*self
+                .vars
+                .get(var)
+                .unwrap_or_else(|| panic!("Variable not found: {}", var))
+        } else {
+            *self
+                .vars
+                .get(var)
+                .unwrap_or_else(|| panic!("Variable not found: {}", var))
+        }
+    }
+
+    fn insert(&mut self, var: String, value: Tuple) {
+        assert!(
+            !self.vars.contains_key(&var),
+            "Variable already exists: {}",
+            var
+        );
+        self.vars.insert(var, value);
+    }
+}
+
 #[given(expr = r"{word} ← {tuple}")]
 fn given_expr(world: &mut TheWorld, var: String, t: Tuple) {
-    world.vars.insert(var, t);
+    world.insert(var, t);
 }
 
 #[then(expr = "{word}.{word} = {float}")]
 fn check_x_value(world: &mut TheWorld, var: String, field: String, val: f32) {
-    let found = world.vars.get(&var).unwrap();
+    let found = world.get(&var);
     let actual = match field.as_str() {
         "x" => found.x,
         "y" => found.y,
@@ -30,7 +57,7 @@ fn check_x_value(world: &mut TheWorld, var: String, field: String, val: f32) {
 
 #[then(expr = "{word} is a {word}")]
 fn a_is_a_point_or_vector(world: &mut TheWorld, var: String, p_or_v: String) {
-    let found = world.vars.get(&var).unwrap();
+    let found = world.get(&var);
     match p_or_v.as_str() {
         "point" => assert!(found.is_point()),
         "vector" => assert!(found.is_vector()),
@@ -40,7 +67,7 @@ fn a_is_a_point_or_vector(world: &mut TheWorld, var: String, p_or_v: String) {
 
 #[then(expr = "{word} is not a {word}")]
 fn a_is_not_a_point_or_vector(world: &mut TheWorld, var: String, p_or_v: String) {
-    let found = world.vars.get(&var).unwrap();
+    let found = world.get(&var);
     match p_or_v.as_str() {
         "point" => assert!(!found.is_point()),
         "vector" => assert!(!found.is_vector()),
@@ -60,13 +87,13 @@ async fn main() {
 fn p_assign_point(world: &mut TheWorld, var: String, x: Float, y: Float, z: Float) {
     let p = make_point(x, y, z);
     assert!(p.is_point());
-    world.vars.insert(var, p);
+    world.insert(var, p);
 }
 #[given(expr = r"{word} ← vector\({float}, {float}, {float}\)")]
 fn p_assign_vector(world: &mut TheWorld, var: String, x: Float, y: Float, z: Float) {
     let v = make_vector(x, y, z);
     assert!(v.is_vector());
-    world.vars.insert(var, v);
+    world.insert(var, v);
 }
 
 #[then(expr = r"{word} - {word} = vector\({float}, {float}, {float}\)")]
@@ -78,9 +105,9 @@ fn p_x_minus_y_equals_vector(
     y: Float,
     z: Float,
 ) {
-    let found_a = world.vars.get(&a).unwrap();
-    let found_b = world.vars.get(&b).unwrap();
-    let actual = found_a.minus(*found_b);
+    let found_a = world.get(&a);
+    let found_b = world.get(&b);
+    let actual = found_a.minus(found_b);
     assert!(actual.is_vector());
     assert_eq_float!(actual.x, x);
     assert_eq_float!(actual.y, y);
@@ -95,9 +122,9 @@ fn p_x_minus_y_equals_point(
     y: Float,
     z: Float,
 ) {
-    let found_a = world.vars.get(&a).unwrap();
-    let found_b = world.vars.get(&b).unwrap();
-    let actual = found_a.minus(*found_b);
+    let found_a = world.get(&a);
+    let found_b = world.get(&b);
+    let actual = found_a.minus(found_b);
     assert!(actual.is_point());
     assert_eq_float!(actual.x, x);
     assert_eq_float!(actual.y, y);
@@ -106,16 +133,7 @@ fn p_x_minus_y_equals_point(
 
 #[then(expr = r"{word} = {tuple}")]
 fn var_eq_tuple(world: &mut TheWorld, var: String, given: Tuple) {
-    let negate = var.starts_with("-");
-    let var = if negate {
-        var.trim_start_matches('-').to_string()
-    } else {
-        var
-    };
-    let mut found = *world.vars.get(&var).unwrap();
-    if negate {
-        found = -found;
-    }
+    let found = world.get(&var);
     assert_eq_float!(found.x, given.x);
     assert_eq_float!(found.y, given.y);
     assert_eq_float!(found.z, given.z);
@@ -124,9 +142,19 @@ fn var_eq_tuple(world: &mut TheWorld, var: String, given: Tuple) {
 
 #[then(expr = r"{word} + {word} = {tuple}")]
 fn add_tuples(world: &mut TheWorld, v1: String, v2: String, expected: Tuple) {
-    let found1 = world.vars.get(&v1).unwrap();
-    let found2 = world.vars.get(&v2).unwrap();
-    let actual = found1.plus(*found2);
+    let found1 = world.get(&v1);
+    let found2 = world.get(&v2);
+    let actual = found1.plus(found2);
+    assert_eq_float!(actual.x, expected.x);
+    assert_eq_float!(actual.y, expected.y);
+    assert_eq_float!(actual.z, expected.z);
+    assert_eq_float!(actual.w, expected.w);
+}
+
+#[then(expr = r"{word} * {float} = {tuple}")]
+fn var_times_float_tuple(world: &mut TheWorld, var: String, f: Float, expected: Tuple) {
+    let found = world.get(&var);
+    let actual = found * f;
     assert_eq_float!(actual.x, expected.x);
     assert_eq_float!(actual.y, expected.y);
     assert_eq_float!(actual.z, expected.z);
