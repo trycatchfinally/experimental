@@ -1,35 +1,68 @@
+use std::str::FromStr;
+
+use cucumber::{Parameter, parser::Error};
 use num_traits::AsPrimitive;
 pub type Int = i32;
 pub type Float = f32;
-pub type Tuple4 = (Float, Float, Float, Float);
+pub type RawTuple4 = (Float, Float, Float, Float);
 
 pub const W_POINT: Float = 1.0;
 pub const W_VECTOR: Float = 0.0;
 
-pub fn make_tuple<T: AsPrimitive<Float>>(x: T, y: T, z: T, w: T) -> Tuple4 {
-    (x.as_(), y.as_(), z.as_(), w.as_())
+pub fn make_tuple<T: AsPrimitive<Float>>(x: T, y: T, z: T, w: T) -> Tuple {
+    Tuple {
+        x: x.as_(),
+        y: y.as_(),
+        z: z.as_(),
+        w: w.as_(),
+    }
 }
 
-pub fn make_point(x: Float, y: Float, z: Float) -> Tuple4 {
-    (x, y, z, W_POINT)
+pub fn make_point(x: Float, y: Float, z: Float) -> Tuple {
+    make_tuple(x, y, z, W_POINT)
 }
-pub fn make_vector(x: Float, y: Float, z: Float) -> Tuple4 {
-    (x, y, z, W_VECTOR)
+pub fn make_vector(x: Float, y: Float, z: Float) -> Tuple {
+    make_tuple(x, y, z, W_VECTOR)
+}
+
+#[derive(Debug, Default, Parameter, Clone, Copy, PartialEq)]
+#[param(
+    name = "tuple",
+    regex = r"tuple\([+-]?([0-9]*[.])?[0-9]+, [+-]?([0-9]*[.])?[0-9]+, [+-]?([0-9]*[.])?[0-9]+, [+-]?([0-9]*[.])?[0-9]+\)"
+)]
+pub struct Tuple {
+    pub x: Float,
+    pub y: Float,
+    pub z: Float,
+    pub w: Float,
+}
+
+impl FromStr for Tuple {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let t = parse_tuple4(s).unwrap();
+        Ok(Tuple {
+            x: t.0,
+            y: t.1,
+            z: t.2,
+            w: t.3,
+        })
+    }
 }
 
 pub trait Plus {
     fn plus(self, other: Self) -> Self;
 }
-impl Plus for Tuple4 {
+impl Plus for Tuple {
     // type Output = Self;
 
     fn plus(self, other: Self) -> Self {
-        (
-            self.0 + other.0,
-            self.1 + other.1,
-            self.2 + other.2,
-            self.3 + other.3,
-        )
+        Tuple {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+            w: self.w + other.w,
+        }
     }
 }
 
@@ -38,7 +71,7 @@ pub trait PointOrVector {
     fn is_vector(&self) -> bool;
 }
 
-impl PointOrVector for Tuple4 {
+impl PointOrVector for RawTuple4 {
     fn is_point(&self) -> bool {
         self.3 as Int == W_POINT as Int
     }
@@ -47,8 +80,17 @@ impl PointOrVector for Tuple4 {
         self.3 as Int == W_VECTOR as Int
     }
 }
+impl PointOrVector for Tuple {
+    fn is_point(&self) -> bool {
+        self.w as Int == W_POINT as Int
+    }
 
-pub fn parse_tuple(s: &str) -> Result<Tuple4, &str> {
+    fn is_vector(&self) -> bool {
+        self.w as Int == W_VECTOR as Int
+    }
+}
+
+pub fn parse_tuple4(s: &str) -> Result<RawTuple4, &str> {
     let s = s.trim();
     let start = s.find('(');
     let end = s.find(')');
@@ -82,12 +124,12 @@ pub fn parse_tuple(s: &str) -> Result<Tuple4, &str> {
     Ok((values[0], values[1], values[2], values[3]))
 }
 
-
 #[cfg(test)]
 mod test {
     use crate::Plus;
     use crate::make_tuple;
-    use crate::parse_tuple;
+    use crate::parse_tuple4;
+
     #[test]
     fn test_add() {
         let a1 = make_tuple(3, -2, 5, 1);
@@ -98,7 +140,7 @@ mod test {
     #[test]
     fn test_parse_tuple() {
         let s = "tuple1(4.3, -4.2, 3.1, 1.0)";
-        let result = parse_tuple(s).unwrap();
+        let result = parse_tuple4(s).unwrap();
         assert_eq!(result, (4.3, -4.2, 3.1, 1.0));
     }
 }
