@@ -11,6 +11,32 @@ impl Color {
     }
 }
 
+pub const COLOR_RED: Color = Color {
+    red: 1.0,
+    green: 0.0,
+    blue: 0.0,
+};
+pub const COLOR_GREEN: Color = Color {
+    red: 0.0,
+    green: 1.0,
+    blue: 0.0,
+};
+pub const COLOR_BLUE: Color = Color {
+    red: 0.0,
+    green: 0.0,
+    blue: 1.0,
+};
+pub const COLOR_WHITE: Color = Color {
+    red: 1.0,
+    green: 1.0,
+    blue: 1.0,
+};
+pub const COLOR_BLACK: Color = Color {
+    red: 0.0,
+    green: 0.0,
+    blue: 0.0,
+};
+
 use std::ops::{Add, Mul, Sub};
 
 impl Add for Color {
