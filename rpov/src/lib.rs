@@ -1,3 +1,5 @@
+pub mod colors;
+
 use std::{
     ops::{Div, Mul, Neg},
     str::FromStr,
@@ -109,6 +111,7 @@ pub trait PlusMinus: Neg + Mul<Float, Output = Self> + Div<f32, Output = Self> {
     fn plus(self, other: Self) -> Self;
     fn minus(self, other: Self) -> Self;
 }
+
 impl PlusMinus for Tuple {
     fn plus(self, other: Self) -> Self {
         Tuple {
@@ -245,5 +248,13 @@ mod test {
         let s = "tuple1(4.3, -4.2, 3.1, 1.0)";
         let result = parse_tuple4(s).unwrap();
         assert_eq!(result, (4.3, -4.2, 3.1, 1.0));
+    }
+
+    #[test]
+    fn color_components_are_red_green_blue() {
+        let c = crate::colors::Color::new(-0.5, 0.4, 1.7);
+        assert_eq!(c.red, -0.5);
+        assert_eq!(c.green, 0.4);
+        assert_eq!(c.blue, 1.7);
     }
 }
