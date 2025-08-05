@@ -7,6 +7,44 @@ impl<T: Copy, const N: usize> Matrix<T, N> {
     pub fn from(data: [[T; N]; N]) -> Self {
         Matrix { data }
     }
+
+    pub fn identity() -> Self
+    where
+        T: Default + From<i32>,
+    {
+        let mut data = [[T::default(); N]; N];
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..N {
+            data[i][i] = T::from(1);
+        }
+        Matrix { data }
+    }
+}
+
+impl<T, const N: usize> Matrix<T, N> {
+    #[allow(clippy::needless_range_loop)]
+    pub fn transpose(&self) -> Self
+    where
+        T: Default + Copy,
+    {
+        let mut transposed = [[T::default(); N]; N];
+        for i in 0..N {
+            for j in 0..N {
+                transposed[j][i] = self.data[i][j];
+            }
+        }
+        Matrix { data: transposed }
+    }
+}
+
+impl<T> Matrix<T, 2>
+where
+    T: Copy + std::ops::Sub<Output = T> + std::ops::Mul<Output = T>,
+{
+    pub fn determinant(&self) -> T {
+        let [[a, b], [c, d]] = self.data;
+        (a * d) - (b * c)
+    }
 }
 
 impl<T, const N: usize> std::ops::Index<(usize, usize)> for Matrix<T, N> {
@@ -36,7 +74,7 @@ where
         .fold(T::default(), |acc, x| acc + x)
 }
 
-impl<T, const N: usize> Matrix<T, N>
+impl<T> Matrix<T, 4>
 where
     T: Copy + Add<Output = T> + Mul<Output = T> + Sub<Output = T> + Default,
 {
@@ -53,11 +91,10 @@ where
     pub fn multiply_tuple(&self, other: &Tuple4<T>) -> Tuple4<T> {
         let t = [other.x, other.y, other.z, other.w];
         let mut r = [T::default(), T::default(), T::default(), T::default()];
-        for i in 0..N {
+        for (i, row) in self.data.iter().enumerate().take(4) {
             let mut acc = T::default();
-            // for j in 0..N {
-            for (j, t_value) in t.iter().enumerate().take(N) {
-                acc = acc + self.data[i][j] * (*t_value);
+            for (j, t_value) in t.iter().enumerate().take(4) {
+                acc = acc + (row[j] * (*t_value));
             }
             r[i] = acc;
         }
@@ -68,6 +105,12 @@ where
             w: r[3],
         }
     }
+}
+impl<T, const N: usize> Matrix<T, N>
+where
+    T: Copy + Add<Output = T> + Mul<Output = T> + Sub<Output = T> + Default,
+{
+    #[allow(clippy::needless_range_loop)]
     pub fn multiply_matrix(&self, other: &Matrix<T, N>) -> Matrix<T, N> {
         let mut result = [[T::default(); N]; N];
         for i in 0..N {
@@ -81,7 +124,6 @@ where
     }
 }
 
-// Implement operator overloading
 impl<T, const N: usize> std::ops::Mul<Matrix<T, N>> for Matrix<T, N>
 where
     T: Copy + Add<Output = T> + Mul<Output = T> + Sub<Output = T> + Default,
@@ -93,7 +135,7 @@ where
     }
 }
 
-impl<T, const N: usize> std::ops::Mul<Tuple4<T>> for Matrix<T, N>
+impl<T> std::ops::Mul<Tuple4<T>> for Matrix<T, 4>
 where
     T: Copy + Add<Output = T> + Mul<Output = T> + Sub<Output = T> + Default,
 {
@@ -103,6 +145,34 @@ where
         self.multiply_tuple(&rhs)
     }
 }
+
+impl<T, const N: usize> Matrix<T, N>
+where
+    T: Copy + Default,
+{
+    // TODO: use {N-1} instead once feature(generic_const_exprs) is in stable
+    pub fn submatrix<const S: usize>(&self, drop_row: usize, drop_col: usize) -> Matrix<T, S> {
+        assert!(
+            N > 1 && S == N - 1,
+            "Submatrix size must be N - 1: got N = {} and S = {} (should have been S = {})",
+            N,
+            S,
+            N - 1
+        );
+        let mut sub = [[T::default(); S]; S];
+        for (i, row) in self.data.iter().enumerate().take(N) {
+            for (j, value) in row.iter().enumerate().take(N) {
+                if i != drop_row && j != drop_col {
+                    let new_i = if i < drop_row { i } else { i - 1 };
+                    let new_j = if j < drop_col { j } else { j - 1 };
+                    sub[new_i][new_j] = *value; // not calling .clone()
+                }
+            }
+        }
+        Matrix::from(sub)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -315,10 +385,6 @@ mod tests {
         let r = a * b;
         assert_eq!(r, expected);
     }
-}
-
-#[cfg(false)]
-mod unimplemented_tests {
 
     /*
     Scenario: Multiplying a matrix by the identity matrix
@@ -348,7 +414,7 @@ mod unimplemented_tests {
     */
     #[test]
     fn identity_matrix_multiplied_by_tuple() {
-        let a = Tuple::new(1.0, 2.0, 3.0, 4.0);
+        let a = Tuple4::new(1.0, 2.0, 3.0, 4.0);
         let identity = Matrix4::identity();
         assert_eq!(identity * a, a);
     }
@@ -390,10 +456,12 @@ mod unimplemented_tests {
     */
     #[test]
     fn transposing_identity_matrix() {
-        let identity = Matrix4::identity();
+        let identity: Matrix4<i32> = Matrix4::identity();
+        assert_eq!(identity.transpose(), identity);
+
+        let identity: Matrix4<f64> = Matrix4::identity();
         assert_eq!(identity.transpose(), identity);
     }
-
     /*
     Scenario: Calculating the determinant of a 2x2 matrix
         Given the following 2x2 matrix A:
@@ -421,7 +489,8 @@ mod unimplemented_tests {
     fn submatrix_of_3x3_is_2x2() {
         let a = Matrix3::from([[1.0, 5.0, 0.0], [-3.0, 2.0, 7.0], [0.0, 6.0, -3.0]]);
         let expected = Matrix2::from([[-3.0, 2.0], [0.0, 6.0]]);
-        assert_eq!(a.submatrix(0, 2), expected);
+        let r = a.submatrix(0, 2);
+        assert_eq!(r, expected);
     }
 
     /*
@@ -445,8 +514,39 @@ mod unimplemented_tests {
             [-7.0, 1.0, -1.0, 1.0],
         ]);
         let expected = Matrix3::from([[-6.0, 1.0, 6.0], [-8.0, 8.0, 6.0], [-7.0, -1.0, 1.0]]);
-        assert_eq!(a.submatrix(2, 1), expected);
+        let r = a.submatrix(2, 1);
+        assert_eq!(r, expected);
     }
+    #[test]
+    #[should_panic(expected = "Submatrix size must be N - 1")]
+    fn submatrix_with_invalid_size_should_panic() {
+        let m = Matrix4::from([
+            [1.0, 2.0, 3.0, 4.0],
+            [5.0, 6.0, 7.0, 8.0],
+            [9.0, 8.0, 7.0, 6.0],
+            [5.0, 4.0, 3.0, 2.0],
+        ]);
+
+        // This should panic because 2 is not N-1 (4-1 = 3)
+        let _submatrix = m.submatrix::<2>(0, 0);
+    }
+    #[test]
+    #[should_panic(expected = "Submatrix size must be N - 1")]
+    fn submatrix_with_invalid_size_should_panic_too_big() {
+        let m = Matrix4::from([
+            [1.0, 2.0, 3.0, 4.0],
+            [5.0, 6.0, 7.0, 8.0],
+            [9.0, 8.0, 7.0, 6.0],
+            [5.0, 4.0, 3.0, 2.0],
+        ]);
+
+        // This should panic because 5 is not N-1 (4-1 = 3)
+        let _submatrix = m.submatrix::<5>(0, 0);
+    }
+}
+
+#[cfg(false)]
+mod unimplemented_tests {
 
     /*
     Scenario: Calculating a minor of a 3x3 matrix

@@ -27,7 +27,7 @@ impl Canvas {
         y * self.width + x
     }
 
-    pub fn write_pixel(&mut self, x: usize, y: usize, color: Color) -> () {
+    pub fn write_pixel(&mut self, x: usize, y: usize, color: Color) {
         let pos = self.check_xy(x, y);
         self.pixels[pos] = color;
     }
@@ -39,7 +39,7 @@ impl Canvas {
         x_direction: i32,
         y_direction: i32,
         color: Color,
-    ) -> () {
+    ) {
         for i in 0..x_direction {
             for j in 0..y_direction {
                 self.write_pixel(x + i as usize, y + j as usize, color);

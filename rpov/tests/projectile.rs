@@ -20,7 +20,7 @@ fn tick_projectile(env: &Environment, proj: &Projectile) -> Projectile {
 
 mod test {
     use num_traits::AsPrimitive;
-    use rpov::colors::{COLOR_RED, COLOR_WHITE};
+    use rpov::colors::COLOR_WHITE;
     use rpov::{make_point, make_vector};
 
     use crate::Environment;

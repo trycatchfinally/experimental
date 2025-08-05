@@ -17,3 +17,6 @@ harness = false
 [[bench]]
 name = "matrices"
 harness = false
+
+# [lints.clippy]
+# needless_range_loop = "allow"
