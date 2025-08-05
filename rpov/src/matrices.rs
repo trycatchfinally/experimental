@@ -1,16 +1,32 @@
+use std::{
+    iter::zip,
+    ops::{Add, Mul, Neg, Sub},
+};
+
+use crate::Tuple4;
+
+pub trait MatrixElement:
+    Copy + Neg<Output = Self> + Add<Output = Self> + Mul<Output = Self> + Sub<Output = Self> + Default
+{
+}
+
+impl MatrixElement for i32 {}
+impl MatrixElement for f32 {}
+impl MatrixElement for f64 {}
+
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub struct Matrix<T, const N: usize> {
+pub struct Matrix<T: MatrixElement, const N: usize> {
     data: [[T; N]; N],
 }
 
-impl<T: Copy, const N: usize> Matrix<T, N> {
+impl<T: MatrixElement, const N: usize> Matrix<T, N> {
     pub fn from(data: [[T; N]; N]) -> Self {
         Matrix { data }
     }
 
     pub fn identity() -> Self
     where
-        T: Default + From<i32>,
+        T: Default + From<i32> + MatrixElement,
     {
         let mut data = [[T::default(); N]; N];
         #[allow(clippy::needless_range_loop)]
@@ -21,7 +37,7 @@ impl<T: Copy, const N: usize> Matrix<T, N> {
     }
 }
 
-impl<T, const N: usize> Matrix<T, N> {
+impl<T: MatrixElement, const N: usize> Matrix<T, N> {
     #[allow(clippy::needless_range_loop)]
     pub fn transpose(&self) -> Self
     where
@@ -37,7 +53,7 @@ impl<T, const N: usize> Matrix<T, N> {
     }
 }
 
-impl<T> Matrix<T, 2>
+impl<T: MatrixElement> Matrix<T, 2>
 where
     T: Copy + std::ops::Sub<Output = T> + std::ops::Mul<Output = T>,
 {
@@ -47,7 +63,7 @@ where
     }
 }
 
-impl<T, const N: usize> std::ops::Index<(usize, usize)> for Matrix<T, N> {
+impl<T: MatrixElement, const N: usize> std::ops::Index<(usize, usize)> for Matrix<T, N> {
     type Output = T;
 
     fn index(&self, index: (usize, usize)) -> &Self::Output {
@@ -58,26 +74,13 @@ pub type Matrix2<T> = Matrix<T, 2>;
 pub type Matrix3<T> = Matrix<T, 3>;
 pub type Matrix4<T> = Matrix<T, 4>;
 
-use std::{
-    iter::zip,
-    ops::{Add, Mul, Sub},
-};
-
-use crate::Tuple4;
-
-fn dot_product<T, const N: usize>(a: &[T; N], b: &[T; 4]) -> T
-where
-    T: Copy + Add<Output = T> + Mul<Output = T> + Sub<Output = T> + Default,
-{
+fn dot_product<T: MatrixElement, const N: usize>(a: &[T; N], b: &[T; 4]) -> T {
     zip(a.iter(), b.iter())
         .map(|(x, y)| *x * *y)
         .fold(T::default(), |acc, x| acc + x)
 }
 
-impl<T> Matrix<T, 4>
-where
-    T: Copy + Add<Output = T> + Mul<Output = T> + Sub<Output = T> + Default,
-{
+impl<T: MatrixElement> Matrix<T, 4> {
     pub fn multiply_tuple_dot(&self, other: &Tuple4<T>) -> Tuple4<T> {
         let t: [T; 4] = [other.x, other.y, other.z, other.w];
 
@@ -106,10 +109,7 @@ where
         }
     }
 }
-impl<T, const N: usize> Matrix<T, N>
-where
-    T: Copy + Add<Output = T> + Mul<Output = T> + Sub<Output = T> + Default,
-{
+impl<T: MatrixElement, const N: usize> Matrix<T, N> {
     #[allow(clippy::needless_range_loop)]
     pub fn multiply_matrix(&self, other: &Matrix<T, N>) -> Matrix<T, N> {
         let mut result = [[T::default(); N]; N];
@@ -124,10 +124,7 @@ where
     }
 }
 
-impl<T, const N: usize> std::ops::Mul<Matrix<T, N>> for Matrix<T, N>
-where
-    T: Copy + Add<Output = T> + Mul<Output = T> + Sub<Output = T> + Default,
-{
+impl<T: MatrixElement, const N: usize> std::ops::Mul<Matrix<T, N>> for Matrix<T, N> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -135,7 +132,7 @@ where
     }
 }
 
-impl<T> std::ops::Mul<Tuple4<T>> for Matrix<T, 4>
+impl<T: MatrixElement> std::ops::Mul<Tuple4<T>> for Matrix<T, 4>
 where
     T: Copy + Add<Output = T> + Mul<Output = T> + Sub<Output = T> + Default,
 {
@@ -146,7 +143,7 @@ where
     }
 }
 
-impl<T, const N: usize> Matrix<T, N>
+impl<T: MatrixElement, const N: usize> Matrix<T, N>
 where
     T: Copy + Default,
 {
