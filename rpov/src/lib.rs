@@ -1,5 +1,6 @@
 pub mod canvas;
 pub mod colors;
+pub mod matrices;
 
 use std::{
     ops::{Div, Mul, Neg},
@@ -29,6 +30,20 @@ pub fn make_point(x: Float, y: Float, z: Float) -> Tuple {
 }
 pub fn make_vector(x: Float, y: Float, z: Float) -> Tuple {
     make_tuple(x, y, z, W_VECTOR)
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct Tuple4<T> {
+    pub x: T,
+    pub y: T,
+    pub z: T,
+    pub w: T,
+}
+
+impl<T> Tuple4<T> {
+    pub fn new(x: T, y: T, z: T, w: T) -> Self {
+        Tuple4 { x, y, z, w }
+    }
 }
 
 #[derive(Debug, Default, Parameter, Clone, Copy, PartialEq)]
