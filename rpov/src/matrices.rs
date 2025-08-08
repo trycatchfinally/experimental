@@ -1,12 +1,19 @@
 use std::{
     iter::zip,
-    ops::{Add, Mul, Neg, Sub},
+    ops::{Add, Div, Mul, Neg, Sub},
 };
 
 use crate::Tuple4;
 
 pub trait MatrixElement:
-    Copy + Neg<Output = Self> + Add<Output = Self> + Mul<Output = Self> + Sub<Output = Self> + Default
+    Copy
+    + Neg<Output = Self>
+    + Add<Output = Self>
+    + Mul<Output = Self>
+    + Sub<Output = Self>
+    + Div<Output = Self>
+    + Default
+    + PartialEq
 {
 }
 
@@ -34,6 +41,24 @@ impl<T: MatrixElement, const N: usize> Matrix<T, N> {
             data[i][i] = T::from(1);
         }
         Matrix { data }
+    }
+
+    pub fn inverse(&self) -> Matrix<<Self as Determinant>::Output, N>
+    where
+        Self: Determinant,
+    {
+        let det = self.determinant();
+        assert!(self.is_invertible(), "Matrix is not invertible");
+
+        let mut result = [[<Matrix<T, N> as Determinant>::Output::default(); N]; N];
+        for row in 0..N {
+            for col in 0..N {
+                let c = self.cofactor(row, col);
+                // Switching row/col for the transpose.
+                result[col][row] = c / det;
+            }
+        }
+        Matrix { data: result }
     }
 }
 
@@ -143,10 +168,7 @@ where
     }
 }
 
-impl<T: MatrixElement, const N: usize> Matrix<T, N>
-where
-    T: Copy + Default,
-{
+impl<T: MatrixElement, const N: usize> Matrix<T, N> {
     // TODO: use {N-1} instead once feature(generic_const_exprs) is in stable
     pub fn submatrix<const S: usize>(&self, drop_row: usize, drop_col: usize) -> Matrix<T, S> {
         assert!(
@@ -170,8 +192,69 @@ where
     }
 }
 
+pub trait Determinant {
+    type Output: std::ops::Neg<Output = Self::Output> + Default + PartialEq + MatrixElement;
+    fn determinant(&self) -> Self::Output;
+    fn minor(&self, row: usize, col: usize) -> Self::Output;
+
+    fn cofactor(&self, row: usize, col: usize) -> Self::Output {
+        let minor = self.minor(row, col);
+        if (row + col) % 2 == 0 { minor } else { -minor }
+    }
+    fn is_invertible(&self) -> bool {
+        let def = <Self as Determinant>::Output::default();
+        self.determinant() != def
+    }
+}
+
+impl<T: MatrixElement> Determinant for Matrix<T, 2> {
+    type Output = T;
+    fn determinant(&self) -> T {
+        let [[a, b], [c, d]] = self.data;
+        (a * d) - (b * c)
+    }
+    fn minor(&self, _row: usize, _col: usize) -> T {
+        panic!("Minor is not defined for 2x2 matrices");
+    }
+}
+
+impl<T: MatrixElement> Determinant for Matrix<T, 3> {
+    type Output = T;
+    fn determinant(&self) -> T {
+        // 3x3 determinant implementation
+        let mut det = T::default();
+        for j in 0..3 {
+            det = det + self.data[0][j] * self.cofactor(0, j);
+        }
+        det
+    }
+
+    fn minor(&self, row: usize, col: usize) -> T {
+        let submatrix = self.submatrix::<2>(row, col);
+        submatrix.determinant()
+    }
+}
+
+impl<T: MatrixElement> Determinant for Matrix<T, 4> {
+    type Output = T;
+    fn determinant(&self) -> T {
+        // 4x4 determinant implementation
+        let mut det = T::default();
+        for j in 0..4 {
+            det = det + self.data[0][j] * self.cofactor(0, j);
+        }
+        det
+    }
+    fn minor(&self, row: usize, col: usize) -> T {
+        let submatrix = self.submatrix::<3>(row, col);
+        submatrix.determinant()
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use std::any::Any;
+
     use super::*;
 
     /*
@@ -444,6 +527,7 @@ mod tests {
             [0.0, 8.0, 3.0, 8.0],
         ]);
         assert_eq!(a.transpose(), expected);
+        check(a.transpose(), expected);
     }
 
     /*
@@ -540,10 +624,6 @@ mod tests {
         // This should panic because 5 is not N-1 (4-1 = 3)
         let _submatrix = m.submatrix::<5>(0, 0);
     }
-}
-
-#[cfg(false)]
-mod unimplemented_tests {
 
     /*
     Scenario: Calculating a minor of a 3x3 matrix
@@ -703,22 +783,20 @@ mod unimplemented_tests {
             [1.0, -3.0, 7.0, 4.0],
         ]);
         let b = a.inverse();
+        assert_eq!(a.type_id(), b.type_id());
         assert_eq!(a.determinant(), 532.0);
         assert_eq!(a.cofactor(2, 3), -160.0);
-        assert!((b[(3, 2)] - (-160.0 / 532.0)).abs() < 1e-5);
+        assert!((b[(3, 2)] - (-160.0 / 532.0f64)).abs() < 1e-5);
         assert_eq!(a.cofactor(3, 2), 105.0);
-        assert!((b[(2, 3)] - (105.0 / 532.0)).abs() < 1e-5);
+        assert!((b[(2, 3)] - (105.0 / 532.0f64)).abs() < 1e-5);
+
         let expected = Matrix4::from([
             [0.21805, 0.45113, 0.24060, -0.04511],
             [-0.80827, -1.45677, -0.44361, 0.52068],
             [-0.07895, -0.22368, -0.05263, 0.19737],
             [-0.52256, -0.81391, -0.30075, 0.30639],
         ]);
-        for row in 0..4 {
-            for col in 0..4 {
-                assert!((b[(row, col)] - expected[(row, col)]).abs() < 1e-5);
-            }
-        }
+        check(b, expected);
     }
 
     /*
@@ -749,13 +827,26 @@ mod unimplemented_tests {
             [-0.69231, -0.69231, -0.76923, -1.92308],
         ]);
         let inv = a.inverse();
+        check(inv, expected);
+    }
+
+    fn check(inv: Matrix4<f64>, expected: Matrix4<f64>) {
         for row in 0..4 {
             for col in 0..4 {
-                assert!((inv[(row, col)] - expected[(row, col)]).abs() < 1e-5);
+                let x: f64 = inv[(row, col)];
+                let expected_value: f64 = expected[(row, col)];
+                // Use a tolerance for floating point comparison
+                assert!(
+                    (x - expected_value).abs() < 1e-5,
+                    "Mismatch at ({}, {}): {} != {}",
+                    row,
+                    col,
+                    x,
+                    expected_value
+                );
             }
         }
     }
-
     /*
     Scenario: Calculating the inverse of a third matrix
         Given the following 4x4 matrix A:
@@ -784,11 +875,8 @@ mod unimplemented_tests {
             [0.17778, 0.06667, -0.26667, 0.33333],
         ]);
         let inv = a.inverse();
-        for row in 0..4 {
-            for col in 0..4 {
-                assert!((inv[(row, col)] - expected[(row, col)]).abs() < 1e-5);
-            }
-        }
+
+        check(inv, expected);
     }
 
     /*
@@ -823,10 +911,6 @@ mod unimplemented_tests {
         let c = a * b;
         let b_inv = b.inverse();
         let result = c * b_inv;
-        for row in 0..4 {
-            for col in 0..4 {
-                assert!((result[(row, col)] - a[(row, col)]).abs() < 1e-5);
-            }
-        }
+        check(result, a);
     }
 }
