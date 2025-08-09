@@ -102,6 +102,7 @@ impl PartialEq for Color {
 mod tests {
     use super::*;
 
+    // Scenario: Colors are (red, green, blue) tuples
     #[test]
     fn color_components_are_red_green_blue() {
         let c = Color::new(-0.5, 0.4, 1.7);
@@ -110,6 +111,7 @@ mod tests {
         assert_eq!(c.blue, 1.7);
     }
 
+    // Scenario: Adding colors
     #[test]
     fn adding_colors() {
         let c1 = Color::new(0.9, 0.6, 0.75);
@@ -118,6 +120,7 @@ mod tests {
         assert_eq!(result, Color::new(1.6, 0.7, 1.0));
     }
 
+    // Scenario: Subtracting colors
     #[test]
     fn subtracting_colors() {
         let c1 = Color::new(0.9, 0.6, 0.75);
@@ -126,6 +129,7 @@ mod tests {
         assert_eq!(result, Color::new(0.2, 0.5, 0.5));
     }
 
+    // Scenario: Multiplying a color by a scalar
     #[test]
     fn multiplying_color_by_scalar() {
         let c = Color::new(0.2, 0.3, 0.4);
@@ -133,6 +137,7 @@ mod tests {
         assert_eq!(result, Color::new(0.4, 0.6, 0.8));
     }
 
+    // Scenario: Multiplying colors
     #[test]
     fn multiplying_colors() {
         let c1 = Color::new(1.0, 0.2, 0.4);

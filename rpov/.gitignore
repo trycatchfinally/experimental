@@ -1,5 +1,5 @@
 Cargo.lock
-
 target/
-
 tests/out-*.ppm
+uv.lock
+.python-version
