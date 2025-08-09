@@ -1,7 +1,10 @@
 pub mod canvas;
 pub mod colors;
+pub mod intersections;
 pub mod matrices;
 pub mod transformations;
+pub mod tuples;
+
 use std::{
     fmt::Display,
     ops::{Add, Div, Mul, Neg},

@@ -1,7 +1,45 @@
+use crate::PointOrVector;
+use crate::Tuple4;
+use crate::TupleElement;
+
+pub fn check_tuple<T: TupleElement>(actual: Tuple4<T>, expected: Tuple4<T>) {
+    let eps = T::from(0.00001).expect("Failed to convert 0.00001 to type T");
+    assert!(
+        (actual.x - expected.x).abs() <= eps,
+        "X value check failed: got {}, expected {}",
+        actual.x,
+        expected.x
+    );
+    assert!(
+        (actual.y - expected.y).abs() <= eps,
+        "Y value check failed: got {}, expected {}",
+        actual.y,
+        expected.y
+    );
+    assert!(
+        (actual.z - expected.z).abs() <= eps,
+        "Z value check failed: got {}, expected {}",
+        actual.z,
+        expected.z
+    );
+    assert!(
+        (actual.w - expected.w).abs() <= eps,
+        "W value check failed: got {}, expected {}",
+        actual.w,
+        expected.w
+    );
+
+    assert!(
+        actual.is_point() == expected.is_point(),
+        "Point check failed: got {}, expected {}",
+        actual.is_point(),
+        expected.is_point()
+    );
+}
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::*;
 
     // Scenario: A tuple with w=1.0 is a point
     //   Given a ← tuple(4.3, -4.2, 3.1, 1.0)
@@ -13,7 +51,7 @@ mod tests {
     //     And a is not a vector
     #[test]
     fn a_tuple_with_w_1_is_a_point() {
-        let a = Tuple::new(4.3, -4.2, 3.1, 1.0);
+        let a = Tuple4::new(4.3, -4.2, 3.1, 1.0);
         assert_eq!(a.x, 4.3);
         assert_eq!(a.y, -4.2);
         assert_eq!(a.z, 3.1);
@@ -32,7 +70,7 @@ mod tests {
     //     And a is a vector
     #[test]
     fn a_tuple_with_w_0_is_a_vector() {
-        let a = Tuple::new(4.3, -4.2, 3.1, 0.0);
+        let a = Tuple4::new(4.3, -4.2, 3.1, 0.0);
         assert_eq!(a.x, 4.3);
         assert_eq!(a.y, -4.2);
         assert_eq!(a.z, 3.1);
@@ -47,7 +85,7 @@ mod tests {
     #[test]
     fn point_creates_tuples_with_w_1() {
         let p = point(4.0, -4.0, 3.0);
-        assert_eq!(p, Tuple::new(4.0, -4.0, 3.0, 1.0));
+        assert_eq!(p, Tuple4::new(4.0, -4.0, 3.0, 1.0));
     }
 
     // Scenario: vector() creates tuples with w=0
@@ -56,7 +94,7 @@ mod tests {
     #[test]
     fn vector_creates_tuples_with_w_0() {
         let v = vector(4.0, -4.0, 3.0);
-        assert_eq!(v, Tuple::new(4.0, -4.0, 3.0, 0.0));
+        assert_eq!(v, Tuple4::new(4.0, -4.0, 3.0, 0.0));
     }
 
     // Scenario: Adding two tuples
@@ -65,9 +103,9 @@ mod tests {
     //    Then a1 + a2 = tuple(1, 1, 6, 1)
     #[test]
     fn adding_two_tuples() {
-        let a1 = Tuple::new(3.0, -2.0, 5.0, 1.0);
-        let a2 = Tuple::new(-2.0, 3.0, 1.0, 0.0);
-        assert_eq!(a1 + a2, Tuple::new(1.0, 1.0, 6.0, 1.0));
+        let a1 = Tuple4::new(3.0, -2.0, 5.0, 1.0);
+        let a2 = Tuple4::new(-2.0, 3.0, 1.0, 0.0);
+        assert_eq!(a1 + a2, Tuple4::new(1.0, 1.0, 6.0, 1.0));
     }
 
     // Scenario: Subtracting two points
@@ -119,8 +157,8 @@ mod tests {
     //   Then -a = tuple(-1, 2, -3, 4)
     #[test]
     fn negating_a_tuple() {
-        let a = Tuple::new(1.0, -2.0, 3.0, -4.0);
-        assert_eq!(-a, Tuple::new(-1.0, 2.0, -3.0, 4.0));
+        let a = Tuple4::new(1.0, -2.0, 3.0, -4.0);
+        assert_eq!(-a, Tuple4::new(-1.0, 2.0, -3.0, 4.0));
     }
 
     // Scenario: Multiplying a tuple by a scalar
@@ -128,8 +166,8 @@ mod tests {
     //   Then a * 3.5 = tuple(3.5, -7, 10.5, -14)
     #[test]
     fn multiplying_a_tuple_by_a_scalar() {
-        let a = Tuple::new(1.0, -2.0, 3.0, -4.0);
-        assert_eq!(a * 3.5, Tuple::new(3.5, -7.0, 10.5, -14.0));
+        let a = Tuple4::new(1.0, -2.0, 3.0, -4.0);
+        assert_eq!(a * 3.5, Tuple4::new(3.5, -7.0, 10.5, -14.0));
     }
 
     // Scenario: Multiplying a tuple by a fraction
@@ -137,8 +175,8 @@ mod tests {
     //   Then a * 0.5 = tuple(0.5, -1, 1.5, -2)
     #[test]
     fn multiplying_a_tuple_by_a_fraction() {
-        let a = Tuple::new(1.0, -2.0, 3.0, -4.0);
-        assert_eq!(a * 0.5, Tuple::new(0.5, -1.0, 1.5, -2.0));
+        let a = Tuple4::new(1.0, -2.0, 3.0, -4.0);
+        assert_eq!(a * 0.5, Tuple4::new(0.5, -1.0, 1.5, -2.0));
     }
 
     // Scenario: Multiplying a negated tuple by a fraction
@@ -146,8 +184,8 @@ mod tests {
     //   Then -a * 0.5 = tuple(-0.5, 1, -1.5, 2)
     #[test]
     fn multiplying_a_negated_tuple_by_a_fraction() {
-        let a = Tuple::new(1.0, -2.0, 3.0, -4.0);
-        assert_eq!(-a * 0.5, Tuple::new(-0.5, 1.0, -1.5, 2.0));
+        let a = Tuple4::new(1.0, -2.0, 3.0, -4.0);
+        assert_eq!(-a * 0.5, Tuple4::new(-0.5, 1.0, -1.5, 2.0));
     }
 
     // Scenario: Dividing a tuple by a scalar
@@ -155,8 +193,8 @@ mod tests {
     //   Then a / 2 = tuple(0.5, -1, 1.5, -2)
     #[test]
     fn dividing_a_tuple_by_a_scalar() {
-        let a = Tuple::new(1.0, -2.0, 3.0, -4.0);
-        assert_eq!(a / 2.0, Tuple::new(0.5, -1.0, 1.5, -2.0));
+        let a = Tuple4::new(1.0, -2.0, 3.0, -4.0);
+        assert_eq!(a / 2.0, Tuple4::new(0.5, -1.0, 1.5, -2.0));
     }
 
     // Scenario: Computing the magnitude of vector(1, 0, 0)
@@ -246,7 +284,7 @@ mod tests {
     fn the_dot_product_of_two_tuples() {
         let a = vector(1.0, 2.0, 3.0);
         let b = vector(2.0, 3.0, 4.0);
-        assert_eq!(dot(&a, &b), 20.0);
+        assert_eq!(a.dot(b), 20.0);
     }
 
     // Scenario: The cross product of two vectors
@@ -258,8 +296,8 @@ mod tests {
     fn the_cross_product_of_two_vectors() {
         let a = vector(1.0, 2.0, 3.0);
         let b = vector(2.0, 3.0, 4.0);
-        assert_eq!(cross(&a, &b), vector(-1.0, 2.0, -1.0));
-        assert_eq!(cross(&b, &a), vector(1.0, -2.0, 1.0));
+        assert_eq!(a.cross(b), vector(-1.0, 2.0, -1.0));
+        assert_eq!(b.cross(a), vector(1.0, -2.0, 1.0));
     }
 
     // Scenario: Reflecting a vector approaching at 45°
@@ -271,7 +309,7 @@ mod tests {
     fn reflecting_a_vector_approaching_at_45_degrees() {
         let v = vector(1.0, -1.0, 0.0);
         let n = vector(0.0, 1.0, 0.0);
-        let r = reflect(&v, &n);
+        let r = v.reflect(n);
         assert_eq!(r, vector(1.0, 1.0, 0.0));
     }
     // Scenario: Reflecting a vector off a slanted surface
@@ -283,7 +321,7 @@ mod tests {
     fn reflecting_a_vector_off_a_slanted_surface() {
         let v = vector(0.0, -1.0, 0.0);
         let n = vector((2.0_f64).sqrt() / 2.0, (2.0_f64).sqrt() / 2.0, 0.0);
-        let r = reflect(&v, &n);
-        assert_eq!(r, vector(1.0, 0.0, 0.0));
+        let r = v.reflect(n);
+        check_tuple(r, vector(1.0, 0.0, 0.0));
     }
 }
