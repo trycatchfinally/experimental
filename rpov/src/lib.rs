@@ -1,7 +1,7 @@
 pub mod canvas;
 pub mod colors;
 pub mod matrices;
-
+pub mod transformations;
 use std::{
     ops::{Div, Mul, Neg},
     str::FromStr,
@@ -25,7 +25,7 @@ pub fn make_tuple<T: AsPrimitive<Float>>(x: T, y: T, z: T, w: T) -> Tuple {
     }
 }
 
-pub fn make_point(x: Float, y: Float, z: Float) -> Tuple {
+pub fn point(x: Float, y: Float, z: Float) -> Tuple {
     make_tuple(x, y, z, W_POINT)
 }
 pub fn make_vector(x: Float, y: Float, z: Float) -> Tuple {

@@ -24,6 +24,7 @@ This is a Rust project that implements a ray tracer. The goal is to create a sim
 ## Coding Style
 
 * Follow the official Rust style guide.
+* Do not prefix function arguments with underscore.
 * Use snake_case for variable and function names.
 * Use CamelCase for struct and enum names.
 * Add comments to explain complex logic.
@@ -37,3 +38,6 @@ This is a Rust project that implements a ray tracer. The goal is to create a sim
 
 * Ignore the `target/` directory.
 * Ignore `*.lock` files.
+
+## General guidance for automation
+* Never remove files I created. Do not suggest or try to run the 'rm' command.

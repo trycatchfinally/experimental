@@ -12,12 +12,12 @@ pub trait MatrixElement:
     + Mul<Output = Self>
     + Sub<Output = Self>
     + Div<Output = Self>
+    + From<f32>
     + Default
     + PartialEq
 {
 }
 
-impl MatrixElement for i32 {}
 impl MatrixElement for f32 {}
 impl MatrixElement for f64 {}
 
@@ -33,12 +33,12 @@ impl<T: MatrixElement, const N: usize> Matrix<T, N> {
 
     pub fn identity() -> Self
     where
-        T: Default + From<i32> + MatrixElement,
+        T: MatrixElement,
     {
         let mut data = [[T::default(); N]; N];
         #[allow(clippy::needless_range_loop)]
         for i in 0..N {
-            data[i][i] = T::from(1);
+            data[i][i] = T::from(1.0);
         }
         Matrix { data }
     }
@@ -537,7 +537,7 @@ mod tests {
     */
     #[test]
     fn transposing_identity_matrix() {
-        let identity: Matrix4<i32> = Matrix4::identity();
+        let identity: Matrix4<f32> = Matrix4::identity();
         assert_eq!(identity.transpose(), identity);
 
         let identity: Matrix4<f64> = Matrix4::identity();
@@ -830,7 +830,7 @@ mod tests {
         check(inv, expected);
     }
 
-    fn check(inv: Matrix4<f64>, expected: Matrix4<f64>) {
+    pub fn check(inv: Matrix4<f64>, expected: Matrix4<f64>) {
         for row in 0..4 {
             for col in 0..4 {
                 let x: f64 = inv[(row, col)];

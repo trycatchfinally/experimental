@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use assert_float_eq::assert_float_absolute_eq as assert_eq_float;
 use cucumber::{World as _, given, then, when};
 
-use rpov::{Float, PlusMinus, PointOrVector, Tuple, make_point, make_vector};
+use rpov::{Float, PlusMinus, PointOrVector, Tuple, make_vector, point};
 
 #[derive(Debug, Default, cucumber::World)]
 struct TheWorld {
@@ -85,7 +85,7 @@ async fn main() {
 
 #[given(expr = r"{word} ← point\({float}, {float}, {float}\)")]
 fn p_assign_point(world: &mut TheWorld, var: String, x: Float, y: Float, z: Float) {
-    let p = make_point(x, y, z);
+    let p = point(x, y, z);
     assert!(p.is_point());
     world.insert(var, p);
 }

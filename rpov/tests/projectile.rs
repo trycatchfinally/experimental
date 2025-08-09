@@ -21,7 +21,7 @@ fn tick_projectile(env: &Environment, proj: &Projectile) -> Projectile {
 mod test {
     use num_traits::AsPrimitive;
     use rpov::colors::COLOR_WHITE;
-    use rpov::{make_point, make_vector};
+    use rpov::{make_vector, point};
 
     use crate::Environment;
     use crate::{Projectile, tick_projectile};
@@ -29,7 +29,7 @@ mod test {
 
     #[test]
     pub fn test_simulate() {
-        let start = make_point(0.0, 1.0, 0.0);
+        let start = point(0.0, 1.0, 0.0);
         let velocity = make_vector(1.0, 1.8, 0.0).normalize() * 11.25;
         let mut projectile = Projectile {
             position: start,
