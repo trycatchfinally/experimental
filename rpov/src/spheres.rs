@@ -1,10 +1,13 @@
+use derive_more::Display;
+
+use crate::intersections::Intersection;
+use crate::point;
 use crate::rays::Ray;
-use crate::{TupleElement, point};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 static SPHERE_ID_COUNTER: AtomicU64 = AtomicU64::new(0);
 
-#[derive(Debug)]
+#[derive(Debug, Display)]
 pub struct Sphere {
     pub id: u64,
 }
@@ -43,18 +46,6 @@ impl Sphere {
         }
 
         vec![Intersection::new(t1, self), Intersection::new(t2, self)]
-    }
-}
-
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub struct Intersection<'a, T: TupleElement> {
-    pub t: T,
-    pub object: &'a Sphere,
-}
-
-impl<'a, T: TupleElement> Intersection<'a, T> {
-    pub fn new(t: T, object: &'a Sphere) -> Self {
-        Self { t, object }
     }
 }
 
