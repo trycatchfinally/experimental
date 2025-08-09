@@ -91,7 +91,13 @@ pub fn check_tuple<T: TupleElement>(actual: Tuple4<T>, expected: Tuple4<T>) {
 
 impl<T: TupleElement> Display for Tuple4<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({}, {}, {}, {})", self.x, self.y, self.z, self.w)
+        if self.is_point() {
+            write!(f, "point({}, {}, {})", self.x, self.y, self.z)
+        } else if self.is_vector() {
+            write!(f, "vector({}, {}, {})", self.x, self.y, self.z)
+        } else {
+            write!(f, "tuple({}, {}, {}, {})", self.x, self.y, self.z, self.w)
+        }
     }
 }
 

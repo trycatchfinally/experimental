@@ -1,4 +1,5 @@
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Display)]
+#[display("Color(r={red}, g={green}, b={blue})")]
 pub struct Color {
     pub red: f64,
     pub green: f64,
@@ -38,6 +39,8 @@ pub const COLOR_BLACK: Color = Color {
 };
 
 use std::ops::{Add, Mul, Sub};
+
+use derive_more::Display;
 
 impl Add for Color {
     type Output = Color;
