@@ -40,4 +40,7 @@ This is a Rust project that implements a ray tracer. The goal is to create a sim
 * Ignore `*.lock` files.
 
 ## General guidance for automation
+
 * Never remove files I created. Do not suggest or try to run the 'rm' command.
+* Always ask before implementing functionality.
+* It's okay to add unit tests that don't compile or don't pass.

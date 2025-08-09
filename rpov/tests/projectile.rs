@@ -46,7 +46,7 @@ mod test {
             projectile = tick_projectile(&e, &projectile);
             let x = projectile.position.x.round() as usize;
             let y = projectile.position.y.round() as usize;
-            if y >= c.height || y <= 0 {
+            if y >= c.height || y == 0 {
                 continue;
             }
             // if x >= c.width || y >= c.height {
