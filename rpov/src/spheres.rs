@@ -1,15 +1,16 @@
-use derive_more::Display;
-
 use crate::intersections::Intersection;
+use crate::matrices::Matrix4;
 use crate::point;
 use crate::rays::Ray;
+use std::fmt;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 static SPHERE_ID_COUNTER: AtomicU64 = AtomicU64::new(0);
 
-#[derive(Debug, Display)]
+#[derive(Debug)]
 pub struct Sphere {
     pub id: u64,
+    pub transform: Matrix4<f64>,
 }
 
 impl PartialEq for Sphere {
@@ -18,18 +19,33 @@ impl PartialEq for Sphere {
     }
 }
 
+impl fmt::Display for Sphere {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Sphere(id={}, transform={:?})", self.id, self.transform)
+    }
+}
+
 impl Sphere {
     pub fn new() -> Self {
         Self {
             id: SPHERE_ID_COUNTER.fetch_add(1, Ordering::SeqCst),
+            transform: Matrix4::identity(),
+        }
+    }
+
+    pub fn with_transform(transform: Matrix4<f64>) -> Self {
+        Self {
+            id: SPHERE_ID_COUNTER.fetch_add(1, Ordering::SeqCst),
+            transform,
         }
     }
 
     pub fn intersect<'a>(&'a self, r: Ray<f64>) -> Vec<Intersection<'a, f64>> {
-        let sphere_to_ray = r.origin - point(0.0, 0.0, 0.0);
+        let local_ray = r.transform(self.transform.inverse());
+        let sphere_to_ray = local_ray.origin - point(0.0, 0.0, 0.0);
 
-        let a = r.direction.dot(r.direction);
-        let b = 2.0 * r.direction.dot(sphere_to_ray);
+        let a = local_ray.direction.dot(local_ray.direction);
+        let b = 2.0 * local_ray.direction.dot(sphere_to_ray);
         let c = sphere_to_ray.dot(sphere_to_ray) - 1.0;
 
         let discriminant = b.powi(2) - 4.0 * a * c;
@@ -54,6 +70,7 @@ mod tests {
 
     use super::*;
     use crate::rays::ray;
+    use crate::transformations::{scaling, translation};
     use crate::vector;
 
     // Scenario: A ray intersects a sphere at two points
@@ -142,5 +159,58 @@ mod tests {
         let s1 = Sphere::new();
         let s2 = Sphere::new();
         assert_ne!(s1.id, s2.id);
+    }
+
+    // Scenario: A sphere's default transformation
+    //   Given s ← sphere()
+    //   Then s.transform = identity_matrix
+    #[test]
+    fn a_sphere_default_transformation() {
+        let s = Sphere::new();
+        assert_eq!(s.transform, Matrix4::identity());
+    }
+
+    // Scenario: Changing a sphere's transformation
+    //   Given s ← sphere()
+    //     And t ← translation(2, 3, 4)
+    //   When set_transform(s, t)
+    //   Then s.transform = t
+    #[test]
+    fn changing_a_sphere_transformation() {
+        let t = translation(2.0, 3.0, 4.0);
+        let s = Sphere::with_transform(t);
+        assert_eq!(s.transform, t);
+    }
+
+    // Scenario: Intersecting a scaled sphere with a ray
+    //   Given r ← ray(point(0, 0, -5), vector(0, 0, 1))
+    //     And s ← sphere()
+    //   When set_transform(s, scaling(2, 2, 2))
+    //     And xs ← intersect(s, r)
+    //   Then xs.count = 2
+    //     And xs[0].t = 3
+    //     And xs[1].t = 7
+    #[test]
+    fn intersecting_a_scaled_sphere_with_a_ray() {
+        let r = ray(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
+        let s = Sphere::with_transform(scaling(2.0, 2.0, 2.0));
+        let xs = s.intersect(r);
+        assert_eq!(xs.len(), 2);
+        assert_eq!(xs[0].t, 3.0);
+        assert_eq!(xs[1].t, 7.0);
+    }
+
+    // Scenario: Intersecting a translated sphere with a ray
+    //   Given r ← ray(point(0, 0, -5), vector(0, 0, 1))
+    //     And s ← sphere()
+    //   When set_transform(s, translation(5, 0, 0))
+    //     And xs ← intersect(s, r)
+    //   Then xs.count = 0
+    #[test]
+    fn intersecting_a_translated_sphere_with_a_ray() {
+        let r = ray(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
+        let s = Sphere::with_transform(translation(5.0, 0.0, 0.0));
+        let xs = s.intersect(r);
+        assert_eq!(xs.len(), 0);
     }
 }
