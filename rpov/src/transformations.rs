@@ -1,9 +1,6 @@
-use crate::{
-    Tuple4,
-    matrices::{Matrix4, MatrixElement},
-};
+use crate::matrices::{Matrix4, MatrixElement};
 
-fn translation<T: MatrixElement>(x: T, y: T, z: T) -> Matrix4<T> {
+pub fn translation<T: MatrixElement>(x: T, y: T, z: T) -> Matrix4<T> {
     let zero = <T as From<f32>>::from(0.0);
     let one = <T as From<f32>>::from(1.0);
     let data: [[T; 4]; 4] = [
@@ -15,7 +12,7 @@ fn translation<T: MatrixElement>(x: T, y: T, z: T) -> Matrix4<T> {
     Matrix4::from(data)
 }
 
-fn scaling<T: MatrixElement>(x: T, y: T, z: T) -> Matrix4<T> {
+pub fn scaling<T: MatrixElement>(x: T, y: T, z: T) -> Matrix4<T> {
     let zero = <T as From<f32>>::from(0.0);
     let one = <T as From<f32>>::from(1.0);
     let data: [[T; 4]; 4] = [
@@ -27,7 +24,7 @@ fn scaling<T: MatrixElement>(x: T, y: T, z: T) -> Matrix4<T> {
     Matrix4::from(data)
 }
 
-fn rotation_x<T: MatrixElement>(r: T) -> Matrix4<T> {
+pub fn rotation_x<T: MatrixElement>(r: T) -> Matrix4<T> {
     let cos_r = r.cos();
     let sin_r = r.sin();
     let zero = <T as From<f32>>::from(0.0);
@@ -40,8 +37,7 @@ fn rotation_x<T: MatrixElement>(r: T) -> Matrix4<T> {
     ];
     Matrix4::from(data)
 }
-
-fn rotation_y<T: MatrixElement>(r: T) -> Matrix4<T> {
+pub fn rotation_y<T: MatrixElement>(r: T) -> Matrix4<T> {
     let cos_r = r.cos();
     let sin_r = r.sin();
     let zero = <T as From<f32>>::from(0.0);
@@ -55,7 +51,7 @@ fn rotation_y<T: MatrixElement>(r: T) -> Matrix4<T> {
     Matrix4::from(data)
 }
 
-fn rotation_z<T: MatrixElement>(r: T) -> Matrix4<T> {
+pub fn rotation_z<T: MatrixElement>(r: T) -> Matrix4<T> {
     let cos_r = r.cos();
     let sin_r = r.sin();
     let zero = <T as From<f32>>::from(0.0);
@@ -69,7 +65,7 @@ fn rotation_z<T: MatrixElement>(r: T) -> Matrix4<T> {
     Matrix4::from(data)
 }
 
-fn shearing<T: MatrixElement>(xy: T, xz: T, yx: T, yz: T, zx: T, zy: T) -> Matrix4<T> {
+pub fn shearing<T: MatrixElement>(xy: T, xz: T, yx: T, yz: T, zx: T, zy: T) -> Matrix4<T> {
     let zero = <T as From<f32>>::from(0.0);
     let one = <T as From<f32>>::from(1.0);
     let data: [[T; 4]; 4] = [
@@ -84,8 +80,8 @@ fn shearing<T: MatrixElement>(xy: T, xz: T, yx: T, yz: T, zx: T, zy: T) -> Matri
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::matrices::{Matrix, check};
-    use crate::{check_tuple, make_vector, point, vector};
+
+    use crate::{check_tuple, make_vector, point};
 
     // Scenario: Multiplying by a translation matrix
     //   Given transform ← translation(5, -3, 2)

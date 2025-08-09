@@ -53,6 +53,7 @@ impl<T: MatrixElement, const N: usize> Matrix<T, N> {
         assert!(self.is_invertible(), "Matrix is not invertible");
 
         let mut result = [[<Matrix<T, N> as Determinant>::Output::default(); N]; N];
+        #[allow(clippy::needless_range_loop)]
         for row in 0..N {
             for col in 0..N {
                 let c = self.cofactor(row, col);
@@ -261,11 +262,7 @@ pub fn check(inv: Matrix4<f64>, expected: Matrix4<f64>) {
             // Use a tolerance for floating point comparison
             assert!(
                 (x - expected_value).abs() < 1e-5,
-                "Mismatch at ({}, {}): {} != {}",
-                row,
-                col,
-                x,
-                expected_value
+                "Mismatch at ({row}, {col}): {x} != {expected_value}"
             );
         }
     }

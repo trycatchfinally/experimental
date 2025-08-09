@@ -2,7 +2,6 @@ pub mod canvas;
 pub mod colors;
 pub mod matrices;
 pub mod transformations;
-use assert_float_eq::assert_float_absolute_eq as assert_eq_float;
 use std::{
     fmt::Display,
     ops::{Add, Div, Mul, Neg},
@@ -11,33 +10,34 @@ pub const W_POINT: f32 = 1.0;
 pub const W_VECTOR: f32 = 0.0;
 
 pub fn make_tuple<T: TupleElement>(x: T, y: T, z: T, w: T) -> Tuple4<T> {
-    Tuple4 {
-        x: x,
-        y: y,
-        z: z,
-        w: w,
-    }
+    Tuple4 { x, y, z, w }
 }
 
 pub fn point<T: TupleElement>(x: T, y: T, z: T) -> Tuple4<T> {
-    let w: T = T::from(W_POINT).expect(&format!(
-        "Failed to convert W_POINT to type {}",
-        std::any::type_name::<T>()
-    ));
+    let w: T = T::from(W_POINT).unwrap_or_else(|| {
+        panic!(
+            "Failed to convert W_POINT to type {}",
+            std::any::type_name::<T>()
+        )
+    });
     make_tuple(x, y, z, w)
 }
 pub fn make_vector<T: TupleElement>(x: T, y: T, z: T) -> Tuple4<T> {
-    let w: T = T::from(W_VECTOR).expect(&format!(
-        "Failed to convert W_VECTOR to type {}",
-        std::any::type_name::<T>()
-    ));
+    let w: T = T::from(W_VECTOR).unwrap_or_else(|| {
+        panic!(
+            "Failed to convert W_VECTOR to type {}",
+            std::any::type_name::<T>()
+        )
+    });
     make_tuple(x, y, z, w)
 }
 pub fn vector<T: TupleElement>(x: T, y: T, z: T) -> Tuple4<T> {
-    let w: T = T::from(W_VECTOR).expect(&format!(
-        "Failed to convert W_VECTOR to type {}",
-        std::any::type_name::<T>()
-    ));
+    let w: T = T::from(W_VECTOR).unwrap_or_else(|| {
+        panic!(
+            "Failed to convert W_VECTOR to type {}",
+            std::any::type_name::<T>()
+        )
+    });
     make_tuple(x, y, z, w)
 }
 
@@ -152,10 +152,12 @@ impl<T: TupleElement> Tuple4<T> {
             "Reflection is only defined for vectors"
         );
         let dot_product = self.dot(normal);
-        let two = T::from(2.0).expect(&format!(
-            "Failed to convert 2.0 to type {}",
-            std::any::type_name::<T>()
-        ));
+        let two = T::from(2.0).unwrap_or_else(|| {
+            panic!(
+                "Failed to convert 2.0 to type {}",
+                std::any::type_name::<T>()
+            )
+        });
         make_vector(
             self.x - two * dot_product * normal.x,
             self.y - two * dot_product * normal.y,

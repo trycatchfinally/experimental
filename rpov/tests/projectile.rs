@@ -32,7 +32,7 @@ mod test {
         let velocity = make_vector(1.0, 1.8, 0.0).normalize() * 11.25;
         let mut projectile = Projectile {
             position: start,
-            velocity: velocity,
+            velocity,
         };
         let gravity = make_vector(0.0, -0.1, 0.0);
         let wind = make_vector(-0.01, 0.0, 0.0);
@@ -61,7 +61,7 @@ mod test {
             tick += 1;
         }
         c.write_pixel(c.width / 2, c.height / 2, COLOR_WHITE);
-        let path = format!("tests/out-projectile-{}.ppm", tick);
+        let path = format!("tests/out-projectile-{tick}.ppm");
         std::fs::write(&path, c.to_ppm()).expect("Unable to write file");
     }
 }
