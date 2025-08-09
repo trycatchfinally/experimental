@@ -251,6 +251,24 @@ impl<T: MatrixElement> Determinant for Matrix<T, 4> {
     }
 }
 
+pub fn check(inv: Matrix4<f64>, expected: Matrix4<f64>) {
+    for row in 0..4 {
+        for col in 0..4 {
+            let x: f64 = inv[(row, col)];
+            let expected_value: f64 = expected[(row, col)];
+            // Use a tolerance for floating point comparison
+            assert!(
+                (x - expected_value).abs() < 1e-5,
+                "Mismatch at ({}, {}): {} != {}",
+                row,
+                col,
+                x,
+                expected_value
+            );
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::any::Any;
@@ -830,23 +848,6 @@ mod tests {
         check(inv, expected);
     }
 
-    pub fn check(inv: Matrix4<f64>, expected: Matrix4<f64>) {
-        for row in 0..4 {
-            for col in 0..4 {
-                let x: f64 = inv[(row, col)];
-                let expected_value: f64 = expected[(row, col)];
-                // Use a tolerance for floating point comparison
-                assert!(
-                    (x - expected_value).abs() < 1e-5,
-                    "Mismatch at ({}, {}): {} != {}",
-                    row,
-                    col,
-                    x,
-                    expected_value
-                );
-            }
-        }
-    }
     /*
     Scenario: Calculating the inverse of a third matrix
         Given the following 4x4 matrix A:

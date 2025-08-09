@@ -31,6 +31,9 @@ pub fn point(x: Float, y: Float, z: Float) -> Tuple {
 pub fn make_vector(x: Float, y: Float, z: Float) -> Tuple {
     make_tuple(x, y, z, W_VECTOR)
 }
+pub fn vector(x: Float, y: Float, z: Float) -> Tuple {
+    make_tuple(x, y, z, W_VECTOR)
+}
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Tuple4<T> {

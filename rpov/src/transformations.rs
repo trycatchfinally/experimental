@@ -155,7 +155,7 @@ mod tests {
     fn the_inverse_of_an_x_rotation_rotates_in_the_opposite_direction() {
         let p = point(0.0, 1.0, 0.0);
         let half_quarter = rotation_x(PI / 4.0);
-        let inv = inverse(half_quarter);
+        let inv = half_quarter.inverse();
         let expected = point(0.0_f32, 2.0_f32.sqrt() / 2.0_f32, -2.0_f32.sqrt() / 2.0_f32);
         assert_eq!(inv * p, expected);
     }
