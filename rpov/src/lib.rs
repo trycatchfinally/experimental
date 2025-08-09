@@ -2,80 +2,127 @@ pub mod canvas;
 pub mod colors;
 pub mod matrices;
 pub mod transformations;
+use assert_float_eq::assert_float_absolute_eq as assert_eq_float;
 use std::{
-    ops::{Div, Mul, Neg},
-    str::FromStr,
+    fmt::Display,
+    ops::{Add, Div, Mul, Neg},
 };
+pub const W_POINT: f32 = 1.0;
+pub const W_VECTOR: f32 = 0.0;
 
-use cucumber::{Parameter, parser::Error};
-use num_traits::AsPrimitive;
-pub type Int = i32;
-pub type Float = f32;
-pub type RawTuple4 = (Float, Float, Float, Float);
-
-pub const W_POINT: Float = 1.0;
-pub const W_VECTOR: Float = 0.0;
-
-pub fn make_tuple<T: AsPrimitive<Float>>(x: T, y: T, z: T, w: T) -> Tuple {
-    Tuple {
-        x: x.as_(),
-        y: y.as_(),
-        z: z.as_(),
-        w: w.as_(),
+pub fn make_tuple<T: TupleElement>(x: T, y: T, z: T, w: T) -> Tuple4<T> {
+    Tuple4 {
+        x: x,
+        y: y,
+        z: z,
+        w: w,
     }
 }
 
-pub fn point(x: Float, y: Float, z: Float) -> Tuple {
-    make_tuple(x, y, z, W_POINT)
+pub fn point<T: TupleElement>(x: T, y: T, z: T) -> Tuple4<T> {
+    let w: T = T::from(W_POINT).expect(&format!(
+        "Failed to convert W_POINT to type {}",
+        std::any::type_name::<T>()
+    ));
+    make_tuple(x, y, z, w)
 }
-pub fn make_vector(x: Float, y: Float, z: Float) -> Tuple {
-    make_tuple(x, y, z, W_VECTOR)
+pub fn make_vector<T: TupleElement>(x: T, y: T, z: T) -> Tuple4<T> {
+    let w: T = T::from(W_VECTOR).expect(&format!(
+        "Failed to convert W_VECTOR to type {}",
+        std::any::type_name::<T>()
+    ));
+    make_tuple(x, y, z, w)
 }
-pub fn vector(x: Float, y: Float, z: Float) -> Tuple {
-    make_tuple(x, y, z, W_VECTOR)
+pub fn vector<T: TupleElement>(x: T, y: T, z: T) -> Tuple4<T> {
+    let w: T = T::from(W_VECTOR).expect(&format!(
+        "Failed to convert W_VECTOR to type {}",
+        std::any::type_name::<T>()
+    ));
+    make_tuple(x, y, z, w)
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub struct Tuple4<T> {
+pub struct Tuple4<T: TupleElement> {
     pub x: T,
     pub y: T,
     pub z: T,
     pub w: T,
 }
 
-impl<T> Tuple4<T> {
+pub fn check_tuple<T: TupleElement>(actual: Tuple4<T>, expected: Tuple4<T>) {
+    let eps = T::from(0.00001).expect("Failed to convert 0.00001 to type T");
+    assert!(
+        (actual.x - expected.x).abs() <= eps,
+        "X value check failed: got {}, expected {}",
+        actual.x,
+        expected.x
+    );
+    assert!(
+        (actual.y - expected.y).abs() <= eps,
+        "Y value check failed: got {}, expected {}",
+        actual.y,
+        expected.y
+    );
+    assert!(
+        (actual.z - expected.z).abs() <= eps,
+        "Z value check failed: got {}, expected {}",
+        actual.z,
+        expected.z
+    );
+    assert!(
+        (actual.w - expected.w).abs() <= eps,
+        "W value check failed: got {}, expected {}",
+        actual.w,
+        expected.w
+    );
+
+    assert!(
+        actual.is_point() == expected.is_point(),
+        "Point check failed: got {}, expected {}",
+        actual.is_point(),
+        expected.is_point()
+    );
+}
+
+impl<T: TupleElement> Display for Tuple4<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}, {}, {}, {})", self.x, self.y, self.z, self.w)
+    }
+}
+
+impl<T: TupleElement> Tuple4<T> {
     pub fn new(x: T, y: T, z: T, w: T) -> Self {
         Tuple4 { x, y, z, w }
     }
 }
 
-#[derive(Debug, Default, Parameter, Clone, Copy, PartialEq)]
-#[param(
-    name = "tuple",
-    regex = r"tuple\([+-]?([0-9]*[.])?[0-9]+, [+-]?([0-9]*[.])?[0-9]+, [+-]?([0-9]*[.])?[0-9]+, [+-]?([0-9]*[.])?[0-9]+\)"
-)]
-pub struct Tuple {
-    pub x: Float,
-    pub y: Float,
-    pub z: Float,
-    pub w: Float,
+pub trait TupleElement:
+    Mul<Output = Self>
+    + Add<Output = Self>
+    + num_traits::Float
+    + Copy
+    + Div<Self, Output = Self>
+    + Neg<Output = Self>
+    + Default
+    + Display
+    + std::fmt::Debug
+{
 }
 
-impl Tuple {
-    pub fn new(x: Float, y: Float, z: Float, w: Float) -> Self {
-        Tuple { x, y, z, w }
-    }
+impl TupleElement for f32 {}
+impl TupleElement for f64 {}
 
-    pub fn magnitude(&self) -> Float {
+impl<T: TupleElement> Tuple4<T> {
+    pub fn magnitude(&self) -> T {
         (self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w).sqrt()
     }
 
-    pub fn normalize(&self) -> Tuple {
+    pub fn normalize(&self) -> Tuple4<T> {
         let mag = self.magnitude();
-        if mag == 0.0 {
+        if mag == T::zero() {
             panic!("Cannot normalize a zero vector");
         }
-        Tuple {
+        Tuple4 {
             x: self.x / mag,
             y: self.y / mag,
             z: self.z / mag,
@@ -83,11 +130,11 @@ impl Tuple {
         }
     }
 
-    pub fn dot(&self, other: Tuple) -> Float {
+    pub fn dot(&self, other: Tuple4<T>) -> T {
         self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w
     }
 
-    pub fn cross(&self, other: Tuple) -> Tuple {
+    pub fn cross(&self, other: Tuple4<T>) -> Tuple4<T> {
         assert!(
             self.is_vector() && other.is_vector(),
             "Cross product is only defined for vectors"
@@ -99,50 +146,39 @@ impl Tuple {
         )
     }
 
-    pub fn reflect(&self, normal: Tuple) -> Tuple {
+    pub fn reflect(&self, normal: Tuple4<T>) -> Tuple4<T> {
         assert!(
             self.is_vector() && normal.is_vector(),
             "Reflection is only defined for vectors"
         );
         let dot_product = self.dot(normal);
+        let two = T::from(2.0).expect(&format!(
+            "Failed to convert 2.0 to type {}",
+            std::any::type_name::<T>()
+        ));
         make_vector(
-            self.x - 2.0 * dot_product * normal.x,
-            self.y - 2.0 * dot_product * normal.y,
-            self.z - 2.0 * dot_product * normal.z,
+            self.x - two * dot_product * normal.x,
+            self.y - two * dot_product * normal.y,
+            self.z - two * dot_product * normal.z,
         )
     }
 }
 
-impl FromStr for Tuple {
-    type Err = Error;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let t = parse_tuple4(s).unwrap();
-        Ok(Tuple {
-            x: t.0,
-            y: t.1,
-            z: t.2,
-            w: t.3,
-        })
-    }
-}
-
-pub trait PlusMinus: Neg + Mul<Float, Output = Self> + Div<f32, Output = Self> {
-    fn plus(self, other: Self) -> Self;
-    fn minus(self, other: Self) -> Self;
-}
-
-impl PlusMinus for Tuple {
-    fn plus(self, other: Self) -> Self {
-        Tuple {
+impl<T: TupleElement> std::ops::Add<Tuple4<T>> for Tuple4<T> {
+    type Output = Tuple4<T>;
+    fn add(self, other: Self) -> Self {
+        Tuple4 {
             x: self.x + other.x,
             y: self.y + other.y,
             z: self.z + other.z,
             w: self.w + other.w,
         }
     }
-
-    fn minus(self, other: Self) -> Self {
-        Tuple {
+}
+impl<T: TupleElement> std::ops::Sub<Tuple4<T>> for Tuple4<T> {
+    type Output = Tuple4<T>;
+    fn sub(self, other: Self) -> Self {
+        Tuple4 {
             x: self.x - other.x,
             y: self.y - other.y,
             z: self.z - other.z,
@@ -151,11 +187,11 @@ impl PlusMinus for Tuple {
     }
 }
 
-impl std::ops::Mul<Float> for Tuple {
-    type Output = Tuple;
+impl<T: TupleElement> std::ops::Mul<T> for Tuple4<T> {
+    type Output = Tuple4<T>;
 
-    fn mul(self, other: Float) -> Tuple {
-        Tuple {
+    fn mul(self, other: T) -> Tuple4<T> {
+        Tuple4 {
             x: self.x * other,
             y: self.y * other,
             z: self.z * other,
@@ -164,11 +200,11 @@ impl std::ops::Mul<Float> for Tuple {
     }
 }
 
-impl std::ops::Div<Float> for Tuple {
-    type Output = Tuple;
+impl<T: TupleElement> std::ops::Div<T> for Tuple4<T> {
+    type Output = Tuple4<T>;
 
-    fn div(self, other: Float) -> Tuple {
-        Tuple {
+    fn div(self, other: T) -> Tuple4<T> {
+        Tuple4 {
             x: self.x / other,
             y: self.y / other,
             z: self.z / other,
@@ -177,11 +213,11 @@ impl std::ops::Div<Float> for Tuple {
     }
 }
 
-impl std::ops::Neg for Tuple {
-    type Output = Tuple;
+impl<T: TupleElement> std::ops::Neg for Tuple4<T> {
+    type Output = Tuple4<T>;
 
-    fn neg(self) -> Tuple {
-        Tuple {
+    fn neg(self) -> Tuple4<T> {
+        Tuple4 {
             x: -self.x,
             y: -self.y,
             z: -self.z,
@@ -195,78 +231,28 @@ pub trait PointOrVector {
     fn is_vector(&self) -> bool;
 }
 
-impl PointOrVector for RawTuple4 {
+impl<T: TupleElement> PointOrVector for Tuple4<T> {
     fn is_point(&self) -> bool {
-        self.3 as Int == W_POINT as Int
+        self.w.trunc().to_i32().expect("expected w") == 1
+        // T::to_i32(W_POINT).expect("expected W_POINT")
     }
 
     fn is_vector(&self) -> bool {
-        self.3 as Int == W_VECTOR as Int
+        self.w.trunc().to_i32().expect("expected w") == 0
     }
-}
-
-impl PointOrVector for Tuple {
-    fn is_point(&self) -> bool {
-        self.w as Int == W_POINT as Int
-    }
-
-    fn is_vector(&self) -> bool {
-        self.w as Int == W_VECTOR as Int
-    }
-}
-
-pub fn parse_tuple4(s: &str) -> Result<RawTuple4, &str> {
-    let s = s.trim();
-    let start = s.find('(');
-    let end = s.find(')');
-
-    if start.is_none() || end.is_none() {
-        return Err("Invalid tuple string: missing parentheses");
-    }
-
-    let start = start.unwrap();
-    let end = end.unwrap();
-
-    if start >= end {
-        return Err("Invalid tuple string: invalid parentheses");
-    }
-
-    let numbers_str = &s[start + 1..end];
-    let parts: Vec<&str> = numbers_str.split(',').collect();
-
-    if parts.len() != 4 {
-        return Err("Invalid tuple string: wrong number of components");
-    }
-
-    let mut values = [0.0; 4];
-    for (i, part) in parts.iter().enumerate() {
-        match part.trim().parse::<Float>() {
-            Ok(num) => values[i] = num,
-            Err(_) => return Err("Invalid number in tuple string"),
-        }
-    }
-
-    Ok((values[0], values[1], values[2], values[3]))
 }
 
 #[cfg(test)]
 mod test {
-    use crate::PlusMinus;
+    use crate::Tuple4;
     use crate::make_tuple;
-    use crate::parse_tuple4;
 
     #[test]
     fn test_add() {
-        let a1 = make_tuple(3, -2, 5, 1);
-        let a2 = make_tuple(-2, 3, 1, 0);
-        assert!(a1.plus(a2) == make_tuple(1, 1, 6, 1));
-    }
-
-    #[test]
-    fn test_parse_tuple() {
-        let s = "tuple1(4.3, -4.2, 3.1, 1.0)";
-        let result = parse_tuple4(s).unwrap();
-        assert_eq!(result, (4.3, -4.2, 3.1, 1.0));
+        let a1: Tuple4<f32> = make_tuple(3_f32, -2_f32, 5_f32, 1_f32);
+        let a2: Tuple4<f32> = make_tuple(-2_f32, 3_f32, 1_f32, 0_f32);
+        let c = a1 + a2;
+        assert!(c == make_tuple(1_f32, 1_f32, 6_f32, 1_f32));
     }
 
     #[test]

@@ -10,10 +10,6 @@ cucumber = "0.21.1"
 num-traits = "0.2.19"
 tokio = { version = "1", features = ["full"] }
 
-[[test]]
-name = "chapter1"
-harness = false
-
 [[bench]]
 name = "matrices"
 harness = false

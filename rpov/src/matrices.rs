@@ -3,7 +3,7 @@ use std::{
     ops::{Add, Div, Mul, Neg, Sub},
 };
 
-use crate::Tuple4;
+use crate::{Tuple4, TupleElement};
 
 pub trait MatrixElement:
     Copy
@@ -15,6 +15,7 @@ pub trait MatrixElement:
     + From<f32>
     + Default
     + PartialEq
+    + TupleElement
 {
 }
 
@@ -36,9 +37,10 @@ impl<T: MatrixElement, const N: usize> Matrix<T, N> {
         T: MatrixElement,
     {
         let mut data = [[T::default(); N]; N];
+        let one = <T as From<f32>>::from(1.0);
         #[allow(clippy::needless_range_loop)]
         for i in 0..N {
-            data[i][i] = T::from(1.0);
+            data[i][i] = one;
         }
         Matrix { data }
     }

@@ -1,17 +1,16 @@
 struct Projectile {
-    position: rpov::Tuple,
-    velocity: rpov::Tuple,
+    position: rpov::Tuple4<f32>,
+    velocity: rpov::Tuple4<f32>,
 }
 
 struct Environment {
-    gravity: rpov::Tuple,
-    wind: rpov::Tuple,
+    gravity: rpov::Tuple4<f32>,
+    wind: rpov::Tuple4<f32>,
 }
 
 fn tick_projectile(env: &Environment, proj: &Projectile) -> Projectile {
-    use rpov::PlusMinus;
-    let new_position = proj.position.plus(proj.velocity);
-    let new_velocity = proj.velocity.plus(env.gravity).plus(env.wind);
+    let new_position = proj.position + proj.velocity;
+    let new_velocity = proj.velocity + env.gravity + env.wind;
     Projectile {
         position: new_position,
         velocity: new_velocity,
