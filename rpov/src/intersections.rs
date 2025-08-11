@@ -96,8 +96,8 @@ mod tests {
         let s = Sphere::new();
         let i1 = Intersection::new(1.0, &s);
         let i2 = Intersection::new(2.0, &s);
-        let mut xs = intersections(&[i2, i1]);
-        let i = hit(&mut xs);
+        let xs = intersections(&[i2, i1]);
+        let i = hit(&xs);
         assert_eq!(i, Some(i1));
     }
 

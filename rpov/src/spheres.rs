@@ -1,3 +1,4 @@
+use crate::Tuple4;
 use crate::intersections::Intersection;
 use crate::matrices::Matrix4;
 use crate::point;
@@ -22,6 +23,12 @@ impl PartialEq for Sphere {
 impl fmt::Display for Sphere {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Sphere(id={}, transform={:?})", self.id, self.transform)
+    }
+}
+
+impl Default for Sphere {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -62,6 +69,14 @@ impl Sphere {
         }
 
         vec![Intersection::new(t1, self), Intersection::new(t2, self)]
+    }
+
+    pub fn normal_at(&self, world_point: &Tuple4<f64>) -> Tuple4<f64> {
+        let object_point = self.transform.inverse() * *world_point;
+        let object_normal = object_point - point(0.0, 0.0, 0.0);
+        let mut world_normal = self.transform.inverse().transpose() * object_normal;
+        world_normal.w = 0.0; // Make it a vector
+        world_normal.normalize()
     }
 }
 

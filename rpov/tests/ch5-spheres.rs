@@ -1,12 +1,12 @@
 mod test {
-    use std::{f64::consts::PI, string::String};
+    use std::f64::consts::PI;
 
     use num_traits::ToPrimitive;
     use rpov::{
         Tuple4,
         canvas::Canvas,
         colors::COLOR_RED,
-        matrices::{Matrix, Matrix4},
+        matrices::Matrix4,
         point,
         spheres::Sphere,
         transformations::{rotation_z, scaling, shearing},
@@ -27,11 +27,11 @@ mod test {
             let world_y = half - pixel_size * y.to_f32().unwrap();
             for x in 0..canvas_pixels {
                 let world_x = -half + pixel_size * x.to_f32().unwrap();
-                let position: Tuple4<f64> = point(world_x.into(), world_y.into(), wall_z.into());
+                let position: Tuple4<f64> = point(world_x.into(), world_y.into(), wall_z);
                 let r = rpov::rays::ray(ray_origin, (position - ray_origin).normalize());
                 let xs = shape.intersect(r);
 
-                if xs.len() > 0 {
+                if !xs.is_empty() {
                     c.write_pixel(x, y, color);
                 }
             }

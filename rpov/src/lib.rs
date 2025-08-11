@@ -2,6 +2,7 @@ pub mod canvas;
 pub mod colors;
 pub mod intersections;
 pub mod matrices;
+pub mod normals;
 pub mod rays;
 pub mod spheres;
 pub mod transformations;

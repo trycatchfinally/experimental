@@ -15,7 +15,7 @@ This is a Rust project that implements a ray tracer. The goal is to create a sim
 
 ## Tooling and Commands
 
-* **Build**: `cargo build`
+* **Build**: `cargo build && cargo test --no-run`
 * **Run**: `cargo run`
 * **Test**: `cargo test`
 * **Lint**: `cargo clippy`
@@ -33,6 +33,7 @@ This is a Rust project that implements a ray tracer. The goal is to create a sim
 * Do not write comments like "// Implement Neg for Tuple".
 * Prioritize code correctness and clarity. Speed and efficiency are secondary priorities unless otherwise specified.
 * Never create files with `mod.rs` paths - prefer `src/some_module.rs` instead of `src/some_module/mod.rs`.
+* Ignore all "warning: unused import" messages and do not attempt to fix them.
 
 ## Globbing
 
