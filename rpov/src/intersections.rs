@@ -154,6 +154,7 @@ mod tests {
         let xs = intersections(&[i1, i2, i3, i4]);
         let i = hit(&xs);
         assert_eq!(i, Some(i4));
-        assert_eq!(i.unwrap().t, 2.0)
+        assert_eq!(i.unwrap().t, 2.0);
+        assert_eq!(i.unwrap().object, &s);
     }
 }
