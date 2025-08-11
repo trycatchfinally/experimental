@@ -45,4 +45,30 @@ mod tests {
         assert_eq!(m.specular, 0.9);
         assert_eq!(m.shininess, 200.0);
     }
+
+    // Scenario: A sphere has a default material
+    //   Given s ← sphere()
+    //   When m ← s.material
+    //   Then m = material()
+    #[test]
+    fn a_sphere_has_a_default_material() {
+        let s = crate::spheres::Sphere::new();
+        let m = s.material;
+        assert_eq!(m, Material::new());
+    }
+
+    // Scenario: A sphere may be assigned a material
+    //   Given s ← sphere()
+    //     And m ← material()
+    //     And m.ambient ← 1
+    //   When s.material ← m
+    //   Then s.material = m
+    #[test]
+    fn a_sphere_may_be_assigned_a_material() {
+        let mut s = crate::spheres::Sphere::new();
+        let mut m = Material::new();
+        m.ambient = 1.0;
+        s.material = m;
+        assert_eq!(s.material, m);
+    }
 }

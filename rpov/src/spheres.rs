@@ -1,5 +1,6 @@
 use crate::Tuple4;
 use crate::intersections::Intersection;
+use crate::materials::Material;
 use crate::matrices::Matrix4;
 use crate::point;
 use crate::rays::Ray;
@@ -12,6 +13,7 @@ static SPHERE_ID_COUNTER: AtomicU64 = AtomicU64::new(0);
 pub struct Sphere {
     pub id: u64,
     pub transform: Matrix4<f64>,
+    pub material: Material,
 }
 
 impl PartialEq for Sphere {
@@ -37,6 +39,7 @@ impl Sphere {
         Self {
             id: SPHERE_ID_COUNTER.fetch_add(1, Ordering::SeqCst),
             transform: Matrix4::identity(),
+            material: Material::new(),
         }
     }
 
@@ -44,6 +47,7 @@ impl Sphere {
         Self {
             id: SPHERE_ID_COUNTER.fetch_add(1, Ordering::SeqCst),
             transform,
+            material: Material::new(),
         }
     }
 
