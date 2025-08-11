@@ -1,6 +1,7 @@
 pub mod canvas;
 pub mod colors;
 pub mod intersections;
+pub mod materials;
 pub mod matrices;
 pub mod normals;
 pub mod rays;

@@ -10,8 +10,7 @@ pub struct PointLight {
 pub fn point_light(position: Tuple4<f64>, intensity: Color) -> PointLight {
     assert!(
         position.is_point(),
-        "Position must be a point, got {:?}",
-        position
+        "Position must be a point, got {position:?}"
     );
     PointLight {
         position,
