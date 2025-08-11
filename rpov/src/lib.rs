@@ -4,6 +4,7 @@ pub mod intersections;
 pub mod matrices;
 pub mod normals;
 pub mod rays;
+pub mod reflections;
 pub mod spheres;
 pub mod transformations;
 pub mod tuples;

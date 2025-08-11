@@ -1,15 +1,21 @@
 from pathlib import Path
 import tabulate
+from rich import print
 
-def file_to_scenarios(f:Path) -> list[str]:
-    ret:list[str] = []
+
+def file_to_scenarios(f: Path) -> list[str]:
+    ret: list[str] = []
     for line in f.read_text().splitlines():
+        if "Scenario Outline:" in line:
+            line = line.replace("Scenario Outline:", "Scenario:")
+
         if "Scenario:" in line:
             ret.append(line.strip(" /"))
     return ret
 
+
 def display_coverage():
-    scenario_files:list[Path] = list(Path("scenarios").rglob("*.feature"))
+    scenario_files: list[Path] = list(Path("scenarios").rglob("*.feature"))
     rust_files = list(Path("src").rglob("*.rs"))
 
     implemented = []
@@ -29,7 +35,17 @@ def display_coverage():
             for u in uncovered:
                 print(f.stem, u)
 
-        rows.append((f.stem, len(covered), len(uncovered) ))
+        assert covered or uncovered, f"No scenarios covered or uncovered in {f}"
+
+        # use the rich.emoji class to distinguish between fully covered, partially covered, and uncovered
+        if len(covered) == len(for_file):
+            icon = ":green_circle:"  # All scenarios covered
+        elif len(covered) > 0:
+            icon = ":yellow_circle:"  # Some scenarios covered
+        else:
+            icon = ":red_square:"  # No scenarios covered
+
+        rows.append((f.stem, len(covered), len(uncovered), icon))
 
     rows.sort()
     total_covered = sum(r[1] for r in rows)
@@ -37,11 +53,13 @@ def display_coverage():
     rows.append(("",))
     rows.append(("Total", total_covered, total_uncovered))
 
-    print(tabulate.tabulate(rows, headers=["File", "Covered", "Uncovered"]))
-
+    table = tabulate.tabulate(rows, headers=["File", "Covered", "Uncovered", " ?"])
+    table = table.replace("---------------\n", "--\n")
+    print(table)
     print()
     percentage = total_covered / (total_covered + total_uncovered) * 100
     print(f"Coverage: {percentage:.2f}%")
+
 
 if __name__ == "__main__":
     display_coverage()
