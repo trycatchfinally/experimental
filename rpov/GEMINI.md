@@ -15,7 +15,8 @@ This is a Rust project that implements a ray tracer. The goal is to create a sim
 
 ## Tooling and Commands
 
-* **Build**: `cargo build && cargo test --no-run`
+* **Build**: `cargo build --all-targets`
+* **Check**: `cargo check --all-targets`
 * **Run**: `cargo run`
 * **Test**: `cargo test`
 * **Lint**: `cargo clippy`
