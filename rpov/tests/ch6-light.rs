@@ -1,5 +1,6 @@
 mod test {
 
+    use indicatif::{ProgressBar, ProgressStyle};
     use num_traits::ToPrimitive;
     use rpov::{
         Tuple4,
@@ -14,7 +15,7 @@ mod test {
         let ray_origin = point(0.0, 0.0, -5.0);
         let wall_z = 10.0;
         let wall_size = 7.0;
-        let canvas_pixels = 100;
+        let canvas_pixels = 250;
         let pixel_size = wall_size / (canvas_pixels.to_f32().unwrap());
         let half = wall_size / 2.0;
         let mut c = Canvas::new(canvas_pixels, canvas_pixels);
@@ -25,8 +26,16 @@ mod test {
         let light_color = rpov::colors::Color::new(1.0, 1.0, 1.0);
         let light = point_light(light_position, light_color);
 
+        let path = format!("tests/out-ch6-{name}.ppm");
         let mut found = 0;
+        let bar = ProgressBar::new(canvas_pixels as u64);
+        bar.set_style(ProgressStyle::with_template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {pos}/{len} ({eta}) {msg}")
+            .unwrap()
+            .progress_chars("#>- "));
+        bar.set_message(format!("Rendering {path}"));
+
         for y in 0..canvas_pixels {
+            bar.inc(1);
             let world_y = half - pixel_size * y.to_f32().unwrap();
             for x in 0..canvas_pixels {
                 let world_x = -half + pixel_size * x.to_f32().unwrap();
@@ -48,7 +57,8 @@ mod test {
                 c.write_pixel(x, y, color);
             }
         }
-        let path = format!("tests/out-ch6-{name}.ppm");
+        bar.finish_with_message(format!("Rendering {path} complete!"));
+
         std::fs::write(&path, c.to_ppm()).expect("Unable to write file");
         assert!(found > 0, "No intersections found");
     }

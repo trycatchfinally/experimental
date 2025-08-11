@@ -48,3 +48,4 @@ This is a Rust project that implements a ray tracer. The goal is to create a sim
 * Always ask before implementing non-trivial functionality.
 * It's okay to add unit tests and statements in unit tests that don't compile or don't pass.
 * Always check to see if a file exists before creating it.
+* Never suggest `git` operations.
