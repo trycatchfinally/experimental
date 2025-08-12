@@ -1,5 +1,6 @@
 pub mod canvas;
 pub mod colors;
+pub mod floats;
 pub mod intersections;
 pub mod lighting;
 pub mod materials;
@@ -9,6 +10,7 @@ pub mod rays;
 pub mod spheres;
 pub mod transformations;
 pub mod tuples;
+pub mod world;
 
 use std::{
     fmt::Display,

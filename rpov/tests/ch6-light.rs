@@ -11,11 +11,10 @@ mod test {
         spheres::Sphere,
     };
 
-    fn run_example(name: &str) {
+    fn run_example(name: &str, canvas_pixels: usize) {
         let ray_origin = point(0.0, 0.0, -5.0);
         let wall_z = 10.0;
         let wall_size = 7.0;
-        let canvas_pixels = 250;
         let pixel_size = wall_size / (canvas_pixels.to_f32().unwrap());
         let half = wall_size / 2.0;
         let mut c = Canvas::new(canvas_pixels, canvas_pixels);
@@ -65,6 +64,6 @@ mod test {
 
     #[test]
     fn ch6_putting_it_together() {
-        run_example("identity");
+        run_example("identity", 50);
     }
 }
