@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [features]
-f32 = []
-default = ["f32"]
+f64 = []
+default = []
 
 [dependencies]
 cargo-make = "0.37.24"
@@ -18,8 +18,8 @@ num-traits = "0.2.19"
 name = "matrices"
 harness = false
 
-# [lints.clippy]
-# needless_range_loop = "allow"
+[lints.clippy]
+useless_conversion = "allow"
 
 [lib]
 doctest = false

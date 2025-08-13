@@ -122,10 +122,7 @@ mod tests {
         let normalv = vector(0.0, 0.0, -1.0);
         let light = point_light(point(0.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let result = lighting(&m, &light, position, eyev, normalv);
-        assert_eq!(
-            result,
-            Color::new(0.7363961030678928, 0.7363961030678928, 0.7363961030678928)
-        );
+        assert_eq!(result, Color::new(0.736_396_1, 0.736_396_1, 0.736_396_1));
     }
 
     // Scenario: Lighting with eye in the path of the reflection vector
@@ -137,10 +134,7 @@ mod tests {
         let normalv = vector(0.0, 0.0, -1.0);
         let light = point_light(point(0.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let result = lighting(&m, &light, position, eyev, normalv);
-        assert_eq!(
-            result,
-            Color::new(1.6363961030678928, 1.6363961030678928, 1.6363961030678928)
-        );
+        assert_eq!(result, Color::new(1.636_396, 1.636_396, 1.636_396));
     }
 
     // Scenario: Lighting with the light behind the surface

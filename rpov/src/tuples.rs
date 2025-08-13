@@ -19,6 +19,15 @@ pub fn make_tuple(x: Float, y: Float, z: Float, w: Float) -> Tuple4 {
     Tuple4 { x, y, z, w }
 }
 
+pub fn make_tuple_int(x: i32, y: i32, z: i32, w: i32) -> Tuple4 {
+    Tuple4 {
+        x: x as Float,
+        y: y as Float,
+        z: z as Float,
+        w: w as Float,
+    }
+}
+
 pub fn point(x: Float, y: Float, z: Float) -> Tuple4 {
     make_tuple(x, y, z, W_POINT)
 }
@@ -224,8 +233,11 @@ impl PointOrVector for Tuple4 {
 mod test {
     use std::f32::consts::SQRT_2;
 
+    use crate::floats::Float;
+    use crate::floats::ONE;
     use crate::tuples::PointOrVector;
     use crate::tuples::check_tuple;
+    use crate::tuples::make_tuple_int;
     use crate::tuples::point;
     use crate::tuples::vector;
 
@@ -234,10 +246,11 @@ mod test {
 
     #[test]
     fn test_add() {
-        let a1: Tuple4 = make_tuple(3_f32, -2_f32, 5_f32, 1_f32);
-        let a2: Tuple4 = make_tuple(-2_f32, 3_f32, 1_f32, 0_f32);
+        let a1: Tuple4 = make_tuple_int(3, -2, 5, 1);
+        let a2: Tuple4 = make_tuple_int(-2, 3, 1, 0);
         let c = a1 + a2;
-        assert!(c == make_tuple(1_f32, 1_f32, 6_f32, 1_f32));
+        let six: Float = 6.0;
+        assert!(c == make_tuple(ONE, ONE, six, ONE));
     }
 
     #[test]
@@ -437,7 +450,10 @@ mod test {
     #[test]
     fn computing_the_magnitude_of_vector_1_2_3() {
         let v = vector(1.0, 2.0, 3.0);
-        assert_eq!(v.magnitude(), (14.0_f32).sqrt());
+        assert_eq!(
+            (v.magnitude() * 1000.0) as i32,
+            ((14.0_f32).sqrt() * 1000.0) as i32
+        );
     }
 
     // Scenario: Computing the magnitude of vector(-1, -2, -3)
@@ -446,7 +462,8 @@ mod test {
     #[test]
     fn computing_the_magnitude_of_vector_neg_1_neg_2_neg_3() {
         let v = vector(-1.0, -2.0, -3.0);
-        assert_eq!(v.magnitude(), (14.0_f32).sqrt());
+        let expected = (14.0_f32).sqrt() as Float;
+        assert_eq!((v.magnitude() * 1000.0) as i32, (expected * 1000.0) as i32);
     }
 
     // Scenario: Normalizing vector(4, 0, 0) gives (1, 0, 0)
@@ -465,7 +482,7 @@ mod test {
     #[test]
     fn normalizing_vector_1_2_3() {
         let v = vector(1.0, 2.0, 3.0);
-        let sqrt14 = (14.0_f32).sqrt();
+        let sqrt14: Float = Float::from(14.0).sqrt();
         assert_eq!(
             v.normalize(),
             vector(1.0 / sqrt14, 2.0 / sqrt14, 3.0 / sqrt14)
@@ -527,7 +544,7 @@ mod test {
     #[test]
     fn reflecting_a_vector_off_a_slanted_surface() {
         let v = vector(0.0, -1.0, 0.0);
-        let n = vector(SQRT_2 / 2.0, SQRT_2 / 2.0, 0.0);
+        let n = vector((SQRT_2 / 2.0).into(), (SQRT_2 / 2.0).into(), 0.0);
         let r = v.reflect(n);
         check_tuple(r, vector(1.0, 0.0, 0.0));
     }

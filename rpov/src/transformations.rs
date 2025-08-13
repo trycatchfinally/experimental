@@ -192,9 +192,9 @@ mod tests {
     fn the_inverse_of_an_x_rotation_rotates_in_the_opposite_direction() {
         use std::f32::consts::PI;
         let p = point(0.0, 1.0, 0.0);
-        let half_quarter = rotation_x(PI / 4.0);
+        let half_quarter = rotation_x((PI / 4.0) as Float);
         let inv = half_quarter.inverse();
-        let expected = point(0.0_f32, 2.0_f32.sqrt() / 2.0_f32, -2.0_f32.sqrt() / 2.0_f32);
+        let expected = point(0.0, SQRT_2 / 2.0, -SQRT_2 / 2.0);
         check_tuple(inv * p, expected);
     }
 
@@ -314,7 +314,7 @@ mod tests {
     fn individual_transformations_are_applied_in_sequence() {
         use std::f32::consts::PI;
         let p = point(1.0, 0.0, 1.0);
-        let a = rotation_x(PI / 2.0);
+        let a = rotation_x((PI / 2.0).into());
         let b = scaling(5.0, 5.0, 5.0);
         let c = translation(10.0, 5.0, 7.0);
 
@@ -322,10 +322,10 @@ mod tests {
         check_tuple(p2, point(1.0, -1.0, 0.0));
 
         let p3 = b * p2;
-        check_tuple(p3, point(5.0_f32, -5.0, 0.0));
+        check_tuple(p3, point(5.0, -5.0, 0.0));
 
         let p4 = c * p3;
-        check_tuple(p4, point(15.0_f32, 0.0, 7.0));
+        check_tuple(p4, point(15.0, 0.0, 7.0));
     }
 
     // Scenario: Chained transformations must be applied in reverse order

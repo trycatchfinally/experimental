@@ -36,7 +36,7 @@ mod tests {
 
     #[test]
     fn test_matrix_identity_display() {
-        let m: rpov::matrices::Matrix<f32, 3> = rpov::matrices::Matrix3::identity();
+        let m = rpov::matrices::Matrix3::identity();
         assert_eq!(
             format!("{m:?}"),
             "Matrix { data: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]] }"
