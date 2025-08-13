@@ -1,14 +1,14 @@
 use crate::colors::{COLOR_BLACK, Color};
 use crate::materials::Material;
-use crate::{PointOrVector, Tuple4};
+use crate::tuples::{PointOrVector, Tuple4};
 
 #[derive(Debug, PartialEq)]
 pub struct PointLight {
-    pub position: Tuple4<f64>,
+    pub position: Tuple4,
     pub intensity: Color,
 }
 
-pub fn point_light(position: Tuple4<f64>, intensity: Color) -> PointLight {
+pub fn point_light(position: Tuple4, intensity: Color) -> PointLight {
     assert!(
         position.is_point(),
         "Position must be a point, got {position:?}"
@@ -22,9 +22,9 @@ pub fn point_light(position: Tuple4<f64>, intensity: Color) -> PointLight {
 pub fn lighting(
     material: &Material,
     light: &PointLight,
-    position: Tuple4<f64>,
-    eyev: Tuple4<f64>,
-    normalv: Tuple4<f64>,
+    position: Tuple4,
+    eyev: Tuple4,
+    normalv: Tuple4,
 ) -> Color {
     // combine the surface color with the light's color/intensity
     let effective_color = material.color * light.intensity;
@@ -70,7 +70,7 @@ mod tests {
     use super::*;
     use crate::colors::Color;
     use crate::materials::Material;
-    use crate::{point, vector};
+    use crate::tuples::{point, vector};
 
     // Scenario: A point light has a position and intensity
     //   Given intensity ← color(1, 1, 1)
@@ -87,7 +87,7 @@ mod tests {
         assert_eq!(light.intensity, intensity);
     }
 
-    fn setup() -> (Material, Tuple4<f64>) {
+    fn setup() -> (Material, Tuple4) {
         (Material::new(), point(0.0, 0.0, 0.0))
     }
 
@@ -106,7 +106,8 @@ mod tests {
     #[test]
     fn test_lighting_with_eye_offset_45_degrees() {
         let (m, position) = setup();
-        let eyev = vector(0.0, (2.0_f64).sqrt() / 2.0, -(2.0_f64).sqrt() / 2.0);
+        let two = crate::floats::TWO;
+        let eyev = vector(0.0, two.sqrt() / 2.0, -(two.sqrt() / 2.0));
         let normalv = vector(0.0, 0.0, -1.0);
         let light = point_light(point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let result = lighting(&m, &light, position, eyev, normalv);
@@ -131,7 +132,8 @@ mod tests {
     #[test]
     fn test_lighting_with_eye_in_path_of_reflection_vector() {
         let (m, position) = setup();
-        let eyev = vector(0.0, -(2.0_f64).sqrt() / 2.0, -(2.0_f64).sqrt() / 2.0);
+        let two = crate::floats::TWO;
+        let eyev = vector(0.0, -two.sqrt() / 2.0, -two.sqrt() / 2.0);
         let normalv = vector(0.0, 0.0, -1.0);
         let light = point_light(point(0.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let result = lighting(&m, &light, position, eyev, normalv);

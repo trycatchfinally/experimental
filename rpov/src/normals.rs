@@ -1,10 +1,13 @@
 #[cfg(test)]
 mod tests {
+    use crate::floats::consts::SQRT_2;
+
+    use crate::floats::Float;
+    use crate::floats::consts::{FRAC_1_SQRT_2, PI};
     use crate::spheres::Sphere;
     use crate::transformations::{rotation_z, scaling, translation};
     use crate::tuples::check_tuple;
-    use crate::{point, vector};
-    use std::f64::consts::{FRAC_1_SQRT_2, PI};
+    use crate::tuples::{point, vector};
 
     // Scenario: The normal on a sphere at a point on the x axis
     //   Given s ← sphere()
@@ -46,7 +49,7 @@ mod tests {
     #[test]
     fn test_normal_on_sphere_at_nonaxial_point() {
         let s = Sphere::new();
-        let val = 3.0_f64.sqrt() / 3.0;
+        let val = Float::from(3.0).sqrt() / 3.0;
         let n = s.normal_at(&point(val, val, val));
         check_tuple(n, vector(val, val, val));
     }
@@ -58,7 +61,7 @@ mod tests {
     #[test]
     fn test_normal_is_normalized_vector() {
         let s = Sphere::new();
-        let val = 3.0_f64.sqrt() / 3.0;
+        let val = Float::from(3.0).sqrt() / 3.0;
         let n = s.normal_at(&point(val, val, val));
         check_tuple(n, n.normalize());
     }
@@ -85,7 +88,7 @@ mod tests {
     fn test_computing_normal_on_transformed_sphere() {
         let m = scaling(1.0, 0.5, 1.0) * rotation_z(PI / 5.0);
         let s = Sphere::with_transform(m);
-        let val = 2.0_f64.sqrt() / 2.0;
+        let val = SQRT_2 / 2.0;
         let n = s.normal_at(&point(0.0, val, -val));
         check_tuple(n, vector(0.0, 0.97014, -0.24254));
     }

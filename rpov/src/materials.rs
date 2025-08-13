@@ -1,10 +1,12 @@
+use crate::floats::Float;
+
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Material {
     pub color: crate::colors::Color,
-    pub ambient: f64,
-    pub diffuse: f64,
-    pub specular: f64,
-    pub shininess: f64,
+    pub ambient: Float,
+    pub diffuse: Float,
+    pub specular: Float,
+    pub shininess: Float,
 }
 
 impl Default for Material {

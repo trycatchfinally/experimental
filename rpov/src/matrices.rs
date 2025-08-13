@@ -3,7 +3,10 @@ use std::{
     ops::{Add, Div, Mul, Neg, Sub},
 };
 
-use crate::{Tuple4, TupleElement};
+use crate::{
+    floats::Float,
+    tuples::{Tuple4, TupleElement},
+};
 
 pub trait MatrixElement:
     Copy
@@ -19,8 +22,7 @@ pub trait MatrixElement:
 {
 }
 
-impl MatrixElement for f32 {}
-impl MatrixElement for f64 {}
+impl MatrixElement for Float {}
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Matrix<T: MatrixElement, const N: usize> {
@@ -98,9 +100,9 @@ impl<T: MatrixElement, const N: usize> std::ops::Index<(usize, usize)> for Matri
         &self.data[index.0][index.1]
     }
 }
-pub type Matrix2<T> = Matrix<T, 2>;
-pub type Matrix3<T> = Matrix<T, 3>;
-pub type Matrix4<T> = Matrix<T, 4>;
+pub type Matrix2 = Matrix<Float, 2>;
+pub type Matrix3 = Matrix<Float, 3>;
+pub type Matrix4 = Matrix<Float, 4>;
 
 fn dot_product<T: MatrixElement, const N: usize>(a: &[T; N], b: &[T; 4]) -> T {
     zip(a.iter(), b.iter())
@@ -108,9 +110,9 @@ fn dot_product<T: MatrixElement, const N: usize>(a: &[T; N], b: &[T; 4]) -> T {
         .fold(T::default(), |acc, x| acc + x)
 }
 
-impl<T: MatrixElement> Matrix<T, 4> {
-    pub fn multiply_tuple_dot(&self, other: &Tuple4<T>) -> Tuple4<T> {
-        let t: [T; 4] = [other.x, other.y, other.z, other.w];
+impl Matrix<Float, 4> {
+    pub fn multiply_tuple_dot(&self, other: &Tuple4) -> Tuple4 {
+        let t = [other.x, other.y, other.z, other.w];
 
         Tuple4 {
             x: dot_product(&self.data[0], &t),
@@ -119,13 +121,18 @@ impl<T: MatrixElement> Matrix<T, 4> {
             w: dot_product(&self.data[3], &t),
         }
     }
-    pub fn multiply_tuple(&self, other: &Tuple4<T>) -> Tuple4<T> {
+    pub fn multiply_tuple(&self, other: &Tuple4) -> Tuple4 {
         let t = [other.x, other.y, other.z, other.w];
-        let mut r = [T::default(), T::default(), T::default(), T::default()];
+        let mut r = [
+            Float::default(),
+            Float::default(),
+            Float::default(),
+            Float::default(),
+        ];
         for (i, row) in self.data.iter().enumerate().take(4) {
-            let mut acc = T::default();
+            let mut acc = Float::default();
             for (j, t_value) in t.iter().enumerate().take(4) {
-                acc = acc + (row[j] * (*t_value));
+                acc += row[j] * (*t_value);
             }
             r[i] = acc;
         }
@@ -160,13 +167,10 @@ impl<T: MatrixElement, const N: usize> std::ops::Mul<Matrix<T, N>> for Matrix<T,
     }
 }
 
-impl<T: MatrixElement> std::ops::Mul<Tuple4<T>> for Matrix<T, 4>
-where
-    T: Copy + Add<Output = T> + Mul<Output = T> + Sub<Output = T> + Default,
-{
-    type Output = Tuple4<T>;
+impl std::ops::Mul<Tuple4> for Matrix<Float, 4> {
+    type Output = Tuple4;
 
-    fn mul(self, rhs: Tuple4<T>) -> Self::Output {
+    fn mul(self, rhs: Tuple4) -> Self::Output {
         self.multiply_tuple(&rhs)
     }
 }
@@ -254,11 +258,11 @@ impl<T: MatrixElement> Determinant for Matrix<T, 4> {
     }
 }
 
-pub fn check(inv: Matrix4<f64>, expected: Matrix4<f64>) {
+pub fn check(inv: Matrix4, expected: Matrix4) {
     for row in 0..4 {
         for col in 0..4 {
-            let x: f64 = inv[(row, col)];
-            let expected_value: f64 = expected[(row, col)];
+            let x = inv[(row, col)];
+            let expected_value = expected[(row, col)];
             // Use a tolerance for floating point comparison
             assert!(
                 (x - expected_value).abs() < 1e-5,
@@ -554,10 +558,10 @@ mod tests {
     */
     #[test]
     fn transposing_identity_matrix() {
-        let identity: Matrix4<f32> = Matrix4::identity();
+        let identity: Matrix4 = Matrix4::identity();
         assert_eq!(identity.transpose(), identity);
 
-        let identity: Matrix4<f64> = Matrix4::identity();
+        let identity: Matrix4 = Matrix4::identity();
         assert_eq!(identity.transpose(), identity);
     }
     /*
@@ -803,9 +807,9 @@ mod tests {
         assert_eq!(a.type_id(), b.type_id());
         assert_eq!(a.determinant(), 532.0);
         assert_eq!(a.cofactor(2, 3), -160.0);
-        assert!((b[(3, 2)] - (-160.0 / 532.0f64)).abs() < 1e-5);
+        assert!((b[(3, 2)] - (-160.0 / 532.0)).abs() < 1e-5);
         assert_eq!(a.cofactor(3, 2), 105.0);
-        assert!((b[(2, 3)] - (105.0 / 532.0f64)).abs() < 1e-5);
+        assert!((b[(2, 3)] - (105.0 / 532.0)).abs() < 1e-5);
 
         let expected = Matrix4::from([
             [0.21805, 0.45113, 0.24060, -0.04511],

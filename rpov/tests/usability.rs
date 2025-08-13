@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use rpov::{make_tuple, make_vector, point};
+    use rpov::tuples::{make_tuple, point, vector as make_vector};
 
     #[test]
     fn test_point_display() {

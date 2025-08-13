@@ -1,4 +1,4 @@
-use crate::colors::Color;
+use crate::{colors::Color, floats::Float};
 
 pub struct Canvas {
     pub width: usize,
@@ -96,7 +96,7 @@ impl Canvas {
         ppm
     }
 
-    fn scale_color(c: f64) -> u8 {
+    fn scale_color(c: Float) -> u8 {
         let c = c.clamp(0.0, 1.0);
         (c * 255.0).round() as u8
     }

@@ -1,18 +1,18 @@
 mod test {
-    use std::f64::consts::PI;
+    use rpov::floats::consts::PI;
 
     use num_traits::ToPrimitive;
     use rpov::{
-        Tuple4,
         canvas::Canvas,
         colors::COLOR_RED,
         matrices::Matrix4,
-        point,
         spheres::Sphere,
         transformations::{rotation_z, scaling, shearing},
+        tuples::Tuple4,
+        tuples::point,
     };
 
-    fn run_example(name: &str, transform: Matrix4<f64>) {
+    fn run_example(name: &str, transform: Matrix4) {
         let ray_origin = point(0.0, 0.0, -5.0);
         let wall_z = -10.0;
         let wall_size = 7.0;
@@ -27,7 +27,7 @@ mod test {
             let world_y = half - pixel_size * y.to_f32().unwrap();
             for x in 0..canvas_pixels {
                 let world_x = -half + pixel_size * x.to_f32().unwrap();
-                let position: Tuple4<f64> = point(world_x.into(), world_y.into(), wall_z);
+                let position: Tuple4 = point(world_x.into(), world_y.into(), wall_z);
                 let r = rpov::rays::ray(ray_origin, (position - ray_origin).normalize());
                 let xs = shape.intersect(r);
 
@@ -42,12 +42,12 @@ mod test {
 
     #[test]
     fn ch5_putting_it_together() {
-        let sx = scaling(0.5, 1.into(), 1.into());
+        let sx = scaling(0.5, 1.0, 1.0);
         run_example("identity", Matrix4::identity());
-        run_example("scaling-y", scaling(1.into(), 0.5, 1.into()));
+        run_example("scaling-y", scaling(1.0, 0.5, 1.0));
         run_example("scaling-x", sx);
 
-        let shr = rotation_z(PI / 4.0) * scaling(0.5, 1.into(), 1.into());
+        let shr = rotation_z(PI / 4.0) * scaling(0.5, 1.0, 1.0);
         run_example("shrink-rotation", shr);
 
         let skr = shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0) * sx;

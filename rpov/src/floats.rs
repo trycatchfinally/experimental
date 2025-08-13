@@ -2,13 +2,15 @@
 #[cfg(feature = "f32")]
 pub type Float = f32;
 #[cfg(feature = "f32")]
-pub use std::f32 as float_consts;
+pub use std::f32::consts;
 
 #[cfg(not(feature = "f32"))]
 pub type Float = f64;
 
 #[cfg(not(feature = "f32"))]
-pub use std::f64 as float_consts;
+pub use std::f64::consts;
+
+pub const TWO: Float = 2.0;
 
 #[cfg(test)]
 mod tests {

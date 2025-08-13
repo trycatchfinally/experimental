@@ -1,27 +1,23 @@
-use crate::{Tuple4, TupleElement, matrices::Matrix4};
+use crate::floats::Float;
+use crate::matrices::Matrix4;
+use crate::tuples::Tuple4;
 
 #[derive(Debug, Clone, Copy)]
-pub struct Ray<T: TupleElement> {
-    pub origin: Tuple4<T>,
-    pub direction: Tuple4<T>,
+pub struct Ray {
+    pub origin: Tuple4,
+    pub direction: Tuple4,
 }
 
-pub fn ray<T: TupleElement>(origin: Tuple4<T>, direction: Tuple4<T>) -> Ray<T> {
+pub fn ray(origin: Tuple4, direction: Tuple4) -> Ray {
     Ray { origin, direction }
 }
 
-impl<T: TupleElement> Ray<T> {
-    pub fn position(&self, t: T) -> Tuple4<T>
-    where
-        T: std::ops::Mul<Output = T> + std::ops::Add<Output = T> + Copy,
-    {
+impl Ray {
+    pub fn position(&self, t: Float) -> Tuple4 {
         self.origin + self.direction * t
     }
 
-    pub fn transform(&self, m: Matrix4<T>) -> Ray<T>
-    where
-        T: crate::matrices::MatrixElement,
-    {
+    pub fn transform(&self, m: Matrix4) -> Ray {
         Ray {
             origin: m * self.origin,
             direction: m * self.direction,
@@ -34,7 +30,7 @@ mod tests {
     use super::*;
     use crate::{
         transformations::{scaling, translation},
-        {point, vector},
+        tuples::{point, vector},
     };
 
     // Scenario: Creating and querying a ray

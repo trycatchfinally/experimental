@@ -1,9 +1,10 @@
-use crate::matrices::{Matrix4, MatrixElement};
+use crate::floats::Float;
+use crate::matrices::Matrix4;
 
-pub fn translation<T: MatrixElement>(x: T, y: T, z: T) -> Matrix4<T> {
-    let zero = <T as From<f32>>::from(0.0);
-    let one = <T as From<f32>>::from(1.0);
-    let data: [[T; 4]; 4] = [
+pub fn translation(x: Float, y: Float, z: Float) -> Matrix4 {
+    let zero = Float::from(0.0);
+    let one = Float::from(1.0);
+    let data: [[Float; 4]; 4] = [
         [one, zero, zero, x],
         [zero, one, zero, y],
         [zero, zero, one, z],
@@ -12,10 +13,10 @@ pub fn translation<T: MatrixElement>(x: T, y: T, z: T) -> Matrix4<T> {
     Matrix4::from(data)
 }
 
-pub fn scaling<T: MatrixElement>(x: T, y: T, z: T) -> Matrix4<T> {
-    let zero = <T as From<f32>>::from(0.0);
-    let one = <T as From<f32>>::from(1.0);
-    let data: [[T; 4]; 4] = [
+pub fn scaling(x: Float, y: Float, z: Float) -> Matrix4 {
+    let zero = Float::from(0.0);
+    let one = Float::from(1.0);
+    let data: [[Float; 4]; 4] = [
         [x, zero, zero, zero],
         [zero, y, zero, zero],
         [zero, zero, z, zero],
@@ -24,12 +25,12 @@ pub fn scaling<T: MatrixElement>(x: T, y: T, z: T) -> Matrix4<T> {
     Matrix4::from(data)
 }
 
-pub fn rotation_x<T: MatrixElement>(r: T) -> Matrix4<T> {
+pub fn rotation_x(r: Float) -> Matrix4 {
     let cos_r = r.cos();
     let sin_r = r.sin();
-    let zero = <T as From<f32>>::from(0.0);
-    let one = <T as From<f32>>::from(1.0);
-    let data: [[T; 4]; 4] = [
+    let zero = Float::from(0.0);
+    let one = Float::from(1.0);
+    let data: [[Float; 4]; 4] = [
         [one, zero, zero, zero],
         [zero, cos_r, -sin_r, zero],
         [zero, sin_r, cos_r, zero],
@@ -37,12 +38,12 @@ pub fn rotation_x<T: MatrixElement>(r: T) -> Matrix4<T> {
     ];
     Matrix4::from(data)
 }
-pub fn rotation_y<T: MatrixElement>(r: T) -> Matrix4<T> {
+pub fn rotation_y(r: Float) -> Matrix4 {
     let cos_r = r.cos();
     let sin_r = r.sin();
-    let zero = <T as From<f32>>::from(0.0);
-    let one = <T as From<f32>>::from(1.0);
-    let data: [[T; 4]; 4] = [
+    let zero = Float::from(0.0);
+    let one = Float::from(1.0);
+    let data: [[Float; 4]; 4] = [
         [cos_r, zero, sin_r, zero],
         [zero, one, zero, zero],
         [-sin_r, zero, cos_r, zero],
@@ -51,12 +52,12 @@ pub fn rotation_y<T: MatrixElement>(r: T) -> Matrix4<T> {
     Matrix4::from(data)
 }
 
-pub fn rotation_z<T: MatrixElement>(r: T) -> Matrix4<T> {
+pub fn rotation_z(r: Float) -> Matrix4 {
     let cos_r = r.cos();
     let sin_r = r.sin();
-    let zero = <T as From<f32>>::from(0.0);
-    let one = <T as From<f32>>::from(1.0);
-    let data: [[T; 4]; 4] = [
+    let zero = Float::from(0.0);
+    let one = Float::from(1.0);
+    let data: [[Float; 4]; 4] = [
         [cos_r, -sin_r, zero, zero],
         [sin_r, cos_r, zero, zero],
         [zero, zero, one, zero],
@@ -65,10 +66,10 @@ pub fn rotation_z<T: MatrixElement>(r: T) -> Matrix4<T> {
     Matrix4::from(data)
 }
 
-pub fn shearing<T: MatrixElement>(xy: T, xz: T, yx: T, yz: T, zx: T, zy: T) -> Matrix4<T> {
-    let zero = <T as From<f32>>::from(0.0);
-    let one = <T as From<f32>>::from(1.0);
-    let data: [[T; 4]; 4] = [
+pub fn shearing(xy: Float, xz: Float, yx: Float, yz: Float, zx: Float, zy: Float) -> Matrix4 {
+    let zero = Float::from(0.0);
+    let one = Float::from(1.0);
+    let data: [[Float; 4]; 4] = [
         [one, xy, xz, zero],
         [yx, one, yz, zero],
         [zx, zy, one, zero],
@@ -80,8 +81,11 @@ pub fn shearing<T: MatrixElement>(xy: T, xz: T, yx: T, yz: T, zx: T, zy: T) -> M
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::floats::TWO;
+    use crate::floats::consts::PI;
+    use crate::floats::consts::SQRT_2;
 
-    use crate::{check_tuple, make_vector, point};
+    use crate::tuples::{check_tuple, point, vector};
 
     // Scenario: Multiplying by a translation matrix
     //   Given transform ← translation(5, -3, 2)
@@ -114,7 +118,7 @@ mod tests {
     #[test]
     fn translation_does_not_affect_vectors() {
         let transform = translation(5.0, -3.0, 2.0);
-        let v = make_vector(-3.0, 4.0, 5.0);
+        let v = vector(-3.0, 4.0, 5.0);
         assert_eq!(transform * v, v);
     }
 
@@ -136,8 +140,8 @@ mod tests {
     #[test]
     fn a_scaling_matrix_applied_to_a_vector() {
         let transform = scaling(2.0, 3.0, 4.0);
-        let v = make_vector(-4.0, 6.0, 8.0);
-        assert_eq!(transform * v, make_vector(-8.0, 18.0, 32.0));
+        let v = vector(-4.0, 6.0, 8.0);
+        assert_eq!(transform * v, vector(-8.0, 18.0, 32.0));
     }
 
     // Scenario: Multiplying by the inverse of a scaling matrix
@@ -149,8 +153,8 @@ mod tests {
     fn multiplying_by_the_inverse_of_a_scaling_matrix() {
         let transform = scaling(2.0, 3.0, 4.0);
         let inv = transform.inverse();
-        let v = make_vector(-4.0, 6.0, 8.0);
-        assert_eq!(inv * v, make_vector(-2.0, 2.0, 2.0));
+        let v = vector(-4.0, 6.0, 8.0);
+        assert_eq!(inv * v, vector(-2.0, 2.0, 2.0));
     }
 
     // Scenario: Reflection is scaling by a negative value
@@ -172,14 +176,10 @@ mod tests {
     //     And full_quarter * p = point(0, 0, 1)
     #[test]
     fn rotating_a_point_around_the_x_axis() {
-        use std::f64::consts::PI;
         let p = point(0.0, 1.0, 0.0);
         let half_quarter = rotation_x(PI / 4.0);
         let full_quarter = rotation_x(PI / 2.0);
-        check_tuple(
-            half_quarter * p,
-            point(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
-        );
+        check_tuple(half_quarter * p, point(0.0, SQRT_2 / 2.0, SQRT_2 / 2.0));
         check_tuple(full_quarter * p, point(0.0, 0.0, 1.0));
     }
 
@@ -206,14 +206,11 @@ mod tests {
     //     And full_quarter * p = point(1, 0, 0)
     #[test]
     fn rotating_a_point_around_the_y_axis() {
-        use std::f64::consts::PI;
+        use crate::floats::consts::PI;
         let p = point(0.0, 0.0, 1.0);
         let half_quarter = rotation_y(PI / 4.0);
         let full_quarter = rotation_y(PI / 2.0);
-        check_tuple(
-            half_quarter * p,
-            point(2.0_f64.sqrt() / 2.0, 0.0, 2.0_f64.sqrt() / 2.0),
-        );
+        check_tuple(half_quarter * p, point(SQRT_2 / 2.0, 0.0, SQRT_2 / 2.0));
         check_tuple(full_quarter * p, point(1.0, 0.0, 0.0));
     }
 
@@ -225,14 +222,11 @@ mod tests {
     //     And full_quarter * p = point(-1, 0, 0)
     #[test]
     fn rotating_a_point_around_the_z_axis() {
-        use std::f64::consts::PI;
+        use crate::floats::consts::PI;
         let p = point(0.0, 1.0, 0.0);
         let half_quarter = rotation_z(PI / 4.0);
-        let full_quarter = rotation_z(PI / 2.0);
-        check_tuple(
-            half_quarter * p,
-            point(-2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0),
-        );
+        let full_quarter = rotation_z(PI / TWO);
+        check_tuple(half_quarter * p, point(-SQRT_2 / 2.0, SQRT_2 / 2.0, 0.0));
         check_tuple(full_quarter * p, point(-1.0, 0.0, 0.0));
     }
 
@@ -343,7 +337,7 @@ mod tests {
     //   Then T * p = point(15, 0, 7)
     #[test]
     fn chained_transformations_must_be_applied_in_reverse_order() {
-        use std::f64::consts::PI;
+        use crate::floats::consts::PI;
         let p = point(1.0, 0.0, 1.0);
         let a = rotation_x(PI / 2.0);
         let b = scaling(5.0, 5.0, 5.0);
@@ -357,11 +351,7 @@ mod tests {
 mod not_yet_implemented {
 
     #[cfg(test)]
-    fn view_transform<T: MatrixElement>(
-        from: Tuple4<T>,
-        to: Tuple4<T>,
-        up: Tuple4<T>,
-    ) -> Matrix4<T> {
+    fn view_transform(from: Tuple4, to: Tuple4, up: Tuple4) -> Matrix4 {
         todo!("view_transform {} {} {}", from, to, up)
     }
 

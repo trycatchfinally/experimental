@@ -1,13 +1,13 @@
 #[derive(Debug, Copy, Clone, Display)]
 #[display("Color(r={red}, g={green}, b={blue})")]
 pub struct Color {
-    pub red: f64,
-    pub green: f64,
-    pub blue: f64,
+    pub red: Float,
+    pub green: Float,
+    pub blue: Float,
 }
 
 impl Color {
-    pub fn new(red: f64, green: f64, blue: f64) -> Color {
+    pub fn new(red: Float, green: Float, blue: Float) -> Color {
         Color { red, green, blue }
     }
 }
@@ -42,6 +42,8 @@ use std::ops::{Add, Mul, Sub};
 
 use derive_more::Display;
 
+use crate::floats::Float;
+
 impl Add for Color {
     type Output = Color;
 
@@ -67,10 +69,10 @@ impl Sub for Color {
 }
 
 // Scalar multiplication: Color * f64
-impl Mul<f64> for Color {
+impl Mul<Float> for Color {
     type Output = Color;
 
-    fn mul(self, rhs: f64) -> Color {
+    fn mul(self, rhs: Float) -> Color {
         Color {
             red: self.red * rhs,
             green: self.green * rhs,
@@ -80,7 +82,7 @@ impl Mul<f64> for Color {
 }
 
 // Hadamard product: Color * Color
-impl Mul for Color {
+impl Mul<Color> for Color {
     type Output = Color;
 
     fn mul(self, rhs: Color) -> Color {
@@ -95,9 +97,9 @@ impl Mul for Color {
 // For assert_eq! in tests
 impl PartialEq for Color {
     fn eq(&self, other: &Self) -> bool {
-        (self.red - other.red).abs() < 1e-10
-            && (self.green - other.green).abs() < 1e-10
-            && (self.blue - other.blue).abs() < 1e-10
+        (self.red - other.red).abs() < 1e-4
+            && (self.green - other.green).abs() < 1e-4
+            && (self.blue - other.blue).abs() < 1e-4
     }
 }
 

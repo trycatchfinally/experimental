@@ -1,9 +1,9 @@
-use crate::Tuple4;
 use crate::intersections::Intersection;
 use crate::materials::Material;
 use crate::matrices::Matrix4;
-use crate::point;
 use crate::rays::Ray;
+use crate::tuples::Tuple4;
+use crate::tuples::point;
 use std::fmt;
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -12,7 +12,7 @@ static SPHERE_ID_COUNTER: AtomicU64 = AtomicU64::new(0);
 #[derive(Debug)]
 pub struct Sphere {
     pub id: u64,
-    pub transform: Matrix4<f64>,
+    pub transform: Matrix4,
     pub material: Material,
 }
 
@@ -43,7 +43,7 @@ impl Sphere {
         }
     }
 
-    pub fn with_transform(transform: Matrix4<f64>) -> Self {
+    pub fn with_transform(transform: Matrix4) -> Self {
         Self {
             id: SPHERE_ID_COUNTER.fetch_add(1, Ordering::SeqCst),
             transform,
@@ -51,7 +51,7 @@ impl Sphere {
         }
     }
 
-    pub fn intersect<'a>(&'a self, r: Ray<f64>) -> Vec<Intersection<'a, f64>> {
+    pub fn intersect<'a>(&'a self, r: Ray) -> Vec<Intersection<'a>> {
         let local_ray = r.transform(self.transform.inverse());
         let sphere_to_ray = local_ray.origin - point(0.0, 0.0, 0.0);
 
@@ -75,7 +75,7 @@ impl Sphere {
         vec![Intersection::new(t1, self), Intersection::new(t2, self)]
     }
 
-    pub fn normal_at(&self, world_point: &Tuple4<f64>) -> Tuple4<f64> {
+    pub fn normal_at(&self, world_point: &Tuple4) -> Tuple4 {
         let object_point = self.transform.inverse() * *world_point;
         let object_normal = object_point - point(0.0, 0.0, 0.0);
         let mut world_normal = self.transform.inverse().transpose() * object_normal;
@@ -90,7 +90,7 @@ mod tests {
     use super::*;
     use crate::rays::ray;
     use crate::transformations::{scaling, translation};
-    use crate::vector;
+    use crate::tuples::vector;
 
     // Scenario: A ray intersects a sphere at two points
     //   Given r ← ray(point(0, 0, -5), vector(0, 0, 1))

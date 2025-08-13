@@ -3,12 +3,12 @@ mod test {
     use indicatif::{ProgressBar, ProgressStyle};
     use num_traits::ToPrimitive;
     use rpov::{
-        Tuple4,
         canvas::Canvas,
         intersections::hit,
         lighting::{lighting, point_light},
-        point,
         spheres::Sphere,
+        tuples::Tuple4,
+        tuples::point,
     };
 
     fn run_example(name: &str, canvas_pixels: usize) {
@@ -38,7 +38,7 @@ mod test {
             let world_y = half - pixel_size * y.to_f32().unwrap();
             for x in 0..canvas_pixels {
                 let world_x = -half + pixel_size * x.to_f32().unwrap();
-                let position: Tuple4<f64> = point(world_x.into(), world_y.into(), wall_z);
+                let position: Tuple4 = point(world_x.into(), world_y.into(), wall_z);
                 let r = rpov::rays::ray(ray_origin, (position - ray_origin).normalize());
                 let intersections = shape.intersect(r);
 

@@ -1,5 +1,5 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use rpov::{Tuple4, matrices::Matrix4};
+use rpov::{matrices::Matrix4, tuples::Tuple4};
 
 fn matrix_tuple_compare(c: &mut Criterion) {
     let a = Matrix4::from([

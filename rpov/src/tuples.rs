@@ -1,9 +1,33 @@
-use crate::PointOrVector;
-use crate::Tuple4;
-use crate::TupleElement;
+use std::{
+    fmt::Display,
+    ops::{Add, Div, Mul, Neg},
+};
 
-pub fn check_tuple<T: TupleElement>(actual: Tuple4<T>, expected: Tuple4<T>) {
-    let eps = T::from(0.00001).expect("Failed to convert 0.00001 to type T");
+use crate::floats::Float;
+pub const W_POINT: Float = 1.0;
+pub const W_VECTOR: Float = 0.0;
+
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct Tuple4 {
+    pub x: Float,
+    pub y: Float,
+    pub z: Float,
+    pub w: Float,
+}
+
+pub fn make_tuple(x: Float, y: Float, z: Float, w: Float) -> Tuple4 {
+    Tuple4 { x, y, z, w }
+}
+
+pub fn point(x: Float, y: Float, z: Float) -> Tuple4 {
+    make_tuple(x, y, z, W_POINT)
+}
+pub fn vector(x: Float, y: Float, z: Float) -> Tuple4 {
+    make_tuple(x, y, z, W_VECTOR)
+}
+
+pub fn check_tuple(actual: Tuple4, expected: Tuple4) {
+    let eps: Float = Float::from(0.00001);
     assert!(
         (actual.x - expected.x).abs() <= eps,
         "X value check failed: got {}, expected {}",
@@ -37,9 +61,192 @@ pub fn check_tuple<T: TupleElement>(actual: Tuple4<T>, expected: Tuple4<T>) {
     );
 }
 
+impl Display for Tuple4 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.is_point() {
+            write!(f, "point({}, {}, {})", self.x, self.y, self.z)
+        } else if self.is_vector() {
+            write!(f, "vector({}, {}, {})", self.x, self.y, self.z)
+        } else {
+            write!(f, "tuple({}, {}, {}, {})", self.x, self.y, self.z, self.w)
+        }
+    }
+}
+
+impl Tuple4 {
+    pub fn new(x: Float, y: Float, z: Float, w: Float) -> Self {
+        Tuple4 { x, y, z, w }
+    }
+}
+
+pub trait TupleElement:
+    Mul<Output = Self>
+    + Add<Output = Self>
+    + num_traits::Float
+    + Copy
+    + Div<Self, Output = Self>
+    + Neg<Output = Self>
+    + Default
+    + Display
+    + std::fmt::Debug
+{
+}
+
+impl TupleElement for Float {}
+
+impl Tuple4 {
+    pub fn magnitude(&self) -> Float {
+        (self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w).sqrt()
+    }
+
+    pub fn normalize(&self) -> Tuple4 {
+        let mag = self.magnitude();
+        if mag == 0.0 {
+            panic!("Cannot normalize a zero vector");
+        }
+        Tuple4 {
+            x: self.x / mag,
+            y: self.y / mag,
+            z: self.z / mag,
+            w: self.w / mag,
+        }
+    }
+
+    pub fn dot(&self, other: Tuple4) -> Float {
+        self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w
+    }
+
+    pub fn cross(&self, other: Tuple4) -> Tuple4 {
+        assert!(
+            self.is_vector() && other.is_vector(),
+            "Cross product is only defined for vectors"
+        );
+        vector(
+            self.y * other.z - self.z * other.y,
+            self.z * other.x - self.x * other.z,
+            self.x * other.y - self.y * other.x,
+        )
+    }
+
+    pub fn reflect(&self, normal: Tuple4) -> Tuple4 {
+        assert!(
+            self.is_vector() && normal.is_vector(),
+            "Reflection is only defined for vectors"
+        );
+        let dot_product = self.dot(normal);
+        let two: Float = 2.0;
+        vector(
+            self.x - two * dot_product * normal.x,
+            self.y - two * dot_product * normal.y,
+            self.z - two * dot_product * normal.z,
+        )
+    }
+}
+
+impl std::ops::Add<Tuple4> for Tuple4 {
+    type Output = Tuple4;
+    fn add(self, other: Self) -> Self {
+        Tuple4 {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+            w: self.w + other.w,
+        }
+    }
+}
+impl std::ops::Sub<Tuple4> for Tuple4 {
+    type Output = Tuple4;
+    fn sub(self, other: Self) -> Self {
+        Tuple4 {
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z,
+            w: self.w - other.w,
+        }
+    }
+}
+
+impl std::ops::Mul<Float> for Tuple4 {
+    type Output = Tuple4;
+
+    fn mul(self, other: Float) -> Tuple4 {
+        Tuple4 {
+            x: self.x * other,
+            y: self.y * other,
+            z: self.z * other,
+            w: self.w * other,
+        }
+    }
+}
+
+impl std::ops::Div<Float> for Tuple4 {
+    type Output = Tuple4;
+
+    fn div(self, other: Float) -> Tuple4 {
+        Tuple4 {
+            x: self.x / other,
+            y: self.y / other,
+            z: self.z / other,
+            w: self.w / other,
+        }
+    }
+}
+
+impl std::ops::Neg for Tuple4 {
+    type Output = Tuple4;
+
+    fn neg(self) -> Tuple4 {
+        Tuple4 {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+            w: -self.w,
+        }
+    }
+}
+
+pub trait PointOrVector {
+    fn is_point(&self) -> bool;
+    fn is_vector(&self) -> bool;
+}
+
+impl PointOrVector for Tuple4 {
+    fn is_point(&self) -> bool {
+        self.w == W_POINT
+    }
+
+    fn is_vector(&self) -> bool {
+        self.w == W_VECTOR
+    }
+}
+
 #[cfg(test)]
-mod tests {
-    use crate::*;
+mod test {
+    use std::f32::consts::SQRT_2;
+
+    use crate::tuples::PointOrVector;
+    use crate::tuples::check_tuple;
+    use crate::tuples::point;
+    use crate::tuples::vector;
+
+    use super::Tuple4;
+    use super::make_tuple;
+
+    #[test]
+    fn test_add() {
+        let a1: Tuple4 = make_tuple(3_f32, -2_f32, 5_f32, 1_f32);
+        let a2: Tuple4 = make_tuple(-2_f32, 3_f32, 1_f32, 0_f32);
+        let c = a1 + a2;
+        assert!(c == make_tuple(1_f32, 1_f32, 6_f32, 1_f32));
+    }
+
+    #[test]
+    fn color_components_are_red_green_blue() {
+        let c = crate::colors::Color::new(-0.5, 0.4, 1.7);
+        assert_eq!(c.red, -0.5);
+        assert_eq!(c.green, 0.4);
+        assert_eq!(c.blue, 1.7);
+    }
 
     // Scenario: A tuple with w=1.0 is a point
     //   Given a ← tuple(4.3, -4.2, 3.1, 1.0)
@@ -230,7 +437,7 @@ mod tests {
     #[test]
     fn computing_the_magnitude_of_vector_1_2_3() {
         let v = vector(1.0, 2.0, 3.0);
-        assert_eq!(v.magnitude(), (14.0_f64).sqrt());
+        assert_eq!(v.magnitude(), (14.0_f32).sqrt());
     }
 
     // Scenario: Computing the magnitude of vector(-1, -2, -3)
@@ -239,7 +446,7 @@ mod tests {
     #[test]
     fn computing_the_magnitude_of_vector_neg_1_neg_2_neg_3() {
         let v = vector(-1.0, -2.0, -3.0);
-        assert_eq!(v.magnitude(), (14.0_f64).sqrt());
+        assert_eq!(v.magnitude(), (14.0_f32).sqrt());
     }
 
     // Scenario: Normalizing vector(4, 0, 0) gives (1, 0, 0)
@@ -258,7 +465,7 @@ mod tests {
     #[test]
     fn normalizing_vector_1_2_3() {
         let v = vector(1.0, 2.0, 3.0);
-        let sqrt14 = (14.0_f64).sqrt();
+        let sqrt14 = (14.0_f32).sqrt();
         assert_eq!(
             v.normalize(),
             vector(1.0 / sqrt14, 2.0 / sqrt14, 3.0 / sqrt14)
@@ -273,7 +480,7 @@ mod tests {
     fn the_magnitude_of_a_normalized_vector() {
         let v = vector(1.0, 2.0, 3.0);
         let norm = v.normalize();
-        assert_eq!(norm.magnitude(), 1.0);
+        assert!((norm.magnitude() - 1.0).abs() <= 1e-6);
     }
 
     // Scenario: The dot product of two tuples
@@ -320,7 +527,7 @@ mod tests {
     #[test]
     fn reflecting_a_vector_off_a_slanted_surface() {
         let v = vector(0.0, -1.0, 0.0);
-        let n = vector((2.0_f64).sqrt() / 2.0, (2.0_f64).sqrt() / 2.0, 0.0);
+        let n = vector(SQRT_2 / 2.0, SQRT_2 / 2.0, 0.0);
         let r = v.reflect(n);
         check_tuple(r, vector(1.0, 0.0, 0.0));
     }

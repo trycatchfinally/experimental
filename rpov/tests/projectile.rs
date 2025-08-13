@@ -1,11 +1,13 @@
+use rpov::tuples::Tuple4;
+
 struct Projectile {
-    position: rpov::Tuple4<f32>,
-    velocity: rpov::Tuple4<f32>,
+    position: Tuple4,
+    velocity: Tuple4,
 }
 
 struct Environment {
-    gravity: rpov::Tuple4<f32>,
-    wind: rpov::Tuple4<f32>,
+    gravity: Tuple4,
+    wind: Tuple4,
 }
 
 fn tick_projectile(env: &Environment, proj: &Projectile) -> Projectile {
@@ -20,7 +22,8 @@ fn tick_projectile(env: &Environment, proj: &Projectile) -> Projectile {
 mod test {
     use num_traits::AsPrimitive;
     use rpov::colors::COLOR_WHITE;
-    use rpov::{make_vector, point};
+    use rpov::floats::Float;
+    use rpov::tuples::{point, vector};
 
     use crate::Environment;
     use crate::{Projectile, tick_projectile};
@@ -29,19 +32,19 @@ mod test {
     #[test]
     pub fn test_simulate() {
         let start = point(0.0, 1.0, 0.0);
-        let velocity = make_vector(1.0, 1.8, 0.0).normalize() * 11.25;
+        let velocity = vector(1.0, 1.8, 0.0).normalize() * 11.25;
         let mut projectile = Projectile {
             position: start,
             velocity,
         };
-        let gravity = make_vector(0.0, -0.1, 0.0);
-        let wind = make_vector(-0.01, 0.0, 0.0);
+        let gravity = vector(0.0, -0.1, 0.0);
+        let wind = vector(-0.01, 0.0, 0.0);
         let e = Environment { gravity, wind };
         let mut c = Canvas::new(900, 550);
 
         let mut tick = 0;
         let red = rpov::colors::Color::new(1.0, 0.0, 0.0);
-        let mut max_speed: f64 = projectile.velocity.magnitude().as_();
+        let mut max_speed: Float = projectile.velocity.magnitude().as_();
         while projectile.position.y > 0.0 {
             projectile = tick_projectile(&e, &projectile);
             let x = projectile.position.x.round() as usize;
@@ -53,9 +56,9 @@ mod test {
             //     panic!("Projectile out of bounds at tick {}: x={}, y={}", tick, x, y);
             // }
             let inv_y = c.height - y - 1; // Invert y for canvas coordinates
-            let speed: f64 = projectile.velocity.magnitude().as_();
+            let speed: Float = projectile.velocity.magnitude().as_();
             let scaled_red = red * (speed / max_speed);
-            max_speed = max_speed.max(speed);
+            max_speed = max_speed.max(speed.into());
             c.write_block(x, inv_y, 3, 3, scaled_red);
             c.write_pixel(x, inv_y, red);
             tick += 1;

@@ -1,31 +1,27 @@
-use crate::{TupleElement, spheres::Sphere};
+use crate::{floats::Float, spheres::Sphere};
 use derive_more::Display;
 
 #[derive(Debug, PartialEq, Clone, Copy, Display)] // Add Display to the derive macro
 #[display("Intersection(t = {}, object = {})", t, object)]
-pub struct Intersection<'a, T: TupleElement> {
-    pub t: T,
+pub struct Intersection<'a> {
+    pub t: Float,
     pub object: &'a Sphere,
 }
 
-impl<'a, T: TupleElement> Intersection<'a, T> {
-    pub fn new(t: T, object: &'a Sphere) -> Self {
+impl<'a> Intersection<'a> {
+    pub fn new(t: Float, object: &'a Sphere) -> Self {
         Self { t, object }
     }
 }
 
-pub fn intersections<'a, T: TupleElement>(
-    intersections: &[Intersection<'a, T>],
-) -> Vec<Intersection<'a, T>> {
+pub fn intersections<'a>(intersections: &[Intersection<'a>]) -> Vec<Intersection<'a>> {
     intersections.to_vec()
 }
 
-pub fn hit<'a, T: TupleElement>(
-    intersections: &[Intersection<'a, T>],
-) -> Option<Intersection<'a, T>> {
+pub fn hit<'a>(intersections: &[Intersection<'a>]) -> Option<Intersection<'a>> {
     intersections
         .iter()
-        .filter(|i| i.t >= T::zero())
+        .filter(|i| i.t >= 0.0)
         .min_by(|a, b| a.t.partial_cmp(&b.t).unwrap())
         .copied()
 }
@@ -33,7 +29,7 @@ pub fn hit<'a, T: TupleElement>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{point, rays::ray, spheres::Sphere, vector};
+    use crate::{rays::ray, spheres::Sphere, tuples::point, tuples::vector};
 
     // Scenario: An intersection encapsulates t and object
     //   Given s ← sphere()
