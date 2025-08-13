@@ -12,6 +12,11 @@ pub use std::f64::consts;
 
 pub const ONE: Float = 1.0;
 pub const TWO: Float = 2.0;
+pub const PI: Float = consts::PI;
+
+pub fn check_float(a: Float, b: Float) {
+    assert!((a - b).abs() < 0.0001);
+}
 
 #[cfg(test)]
 mod tests {

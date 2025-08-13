@@ -12,11 +12,10 @@ mod test {
         tuples::point,
     };
 
-    fn run_example(name: &str, transform: Matrix4) {
+    fn run_example(name: &str, transform: Matrix4, canvas_pixels: usize) {
         let ray_origin = point(0.0, 0.0, -5.0);
         let wall_z = -10.0;
         let wall_size = 7.0;
-        let canvas_pixels = 100;
         let pixel_size = wall_size / (canvas_pixels.to_f32().unwrap());
         let half = wall_size / 2.0;
         let mut c = Canvas::new(canvas_pixels, canvas_pixels);
@@ -36,21 +35,32 @@ mod test {
                 }
             }
         }
-        let path = format!("tests/out-ch5-{name}.ppm");
+        let path = format!("tests/out-ch5-{name}-{canvas_pixels}x{canvas_pixels}.ppm");
         std::fs::write(&path, c.to_ppm()).expect("Unable to write file");
+    }
+
+    fn run_examples(pixels: usize) {
+        let sx = scaling(0.5, 1.0, 1.0);
+        run_example("identity", Matrix4::identity(), pixels);
+        run_example("scaling-y", scaling(1.0, 0.5, 1.0), pixels);
+        run_example("scaling-x", sx, pixels);
+
+        let shr = rotation_z(PI / 4.0) * scaling(0.5, 1.0, 1.0);
+        run_example("shrink-rotation", shr, pixels);
+
+        let skr = shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0) * sx;
+        run_example("shearing", skr, pixels);
     }
 
     #[test]
     fn ch5_putting_it_together() {
-        let sx = scaling(0.5, 1.0, 1.0);
-        run_example("identity", Matrix4::identity());
-        run_example("scaling-y", scaling(1.0, 0.5, 1.0));
-        run_example("scaling-x", sx);
+        let pixels = 100;
+        run_examples(pixels);
+    }
 
-        let shr = rotation_z(PI / 4.0) * scaling(0.5, 1.0, 1.0);
-        run_example("shrink-rotation", shr);
-
-        let skr = shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0) * sx;
-        run_example("shearing", skr);
+    #[test]
+    #[cfg(not(debug_assertions))]
+    fn release_generation() {
+        // flat 2d images, not that much cooler in larger resolutions
     }
 }

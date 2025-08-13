@@ -25,7 +25,7 @@ mod test {
         let light_color = rpov::colors::Color::new(1.0, 1.0, 1.0);
         let light = point_light(light_position, light_color);
 
-        let path = format!("tests/out-ch6-{name}.ppm");
+        let path = format!("tests/out-ch6-{name}-{canvas_pixels}x{canvas_pixels}.ppm");
         let mut found = 0;
         let bar = ProgressBar::new(canvas_pixels as u64);
         bar.set_style(ProgressStyle::with_template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {pos}/{len} ({eta}) {msg}")
@@ -65,5 +65,11 @@ mod test {
     #[test]
     fn ch6_putting_it_together() {
         run_example("identity", 50);
+    }
+
+    #[test]
+    #[cfg(not(debug_assertions))]
+    fn release_generation() {
+        run_example("release", 1600);
     }
 }

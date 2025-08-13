@@ -1,5 +1,6 @@
 use crate::floats::Float;
 use crate::matrices::Matrix4;
+use crate::tuples::Tuple4;
 
 pub fn translation(x: Float, y: Float, z: Float) -> Matrix4 {
     let zero = Float::from(0.0);
@@ -78,6 +79,21 @@ pub fn shearing(xy: Float, xz: Float, yx: Float, yz: Float, zx: Float, zy: Float
     Matrix4::from(data)
 }
 
+pub fn view_transform(from: Tuple4, to: Tuple4, up: Tuple4) -> Matrix4 {
+    let forward = (to - from).normalize();
+    let left = forward.cross(up.normalize());
+    let true_up = left.cross(forward);
+
+    // orientation
+    let orientation = Matrix4::from([
+        [left.x, left.y, left.z, 0.0],
+        [true_up.x, true_up.y, true_up.z, 0.0],
+        [-forward.x, -forward.y, -forward.z, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]);
+    orientation * translation(-from.x, -from.y, -from.z)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -85,6 +101,7 @@ mod tests {
     use crate::floats::consts::PI;
     use crate::floats::consts::SQRT_2;
 
+    use crate::matrices;
     use crate::tuples::{check_tuple, point, vector};
 
     // Scenario: Multiplying by a translation matrix
@@ -345,15 +362,6 @@ mod tests {
         let t = c * b * a;
         assert_eq!(t * p, point(15.0, 0.0, 7.0));
     }
-}
-
-#[cfg(false)]
-mod not_yet_implemented {
-
-    #[cfg(test)]
-    fn view_transform(from: Tuple4, to: Tuple4, up: Tuple4) -> Matrix4 {
-        todo!("view_transform {} {} {}", from, to, up)
-    }
 
     // Scenario: The transformation matrix for the default orientation
     //   Given from ← point(0, 0, 0)
@@ -367,7 +375,7 @@ mod not_yet_implemented {
         let to = point(0.0, 0.0, -1.0);
         let up = vector(0.0, 1.0, 0.0);
         let t = view_transform(from, to, up);
-        assert_eq!(t, identity_matrix());
+        assert_eq!(t, Matrix4::identity());
     }
 
     // Scenario: A view transformation matrix looking in positive z direction
@@ -418,12 +426,12 @@ mod not_yet_implemented {
         let t = view_transform(from, to, up);
         // This test is not implemented because it requires a real matrix implementation
         // and floating point comparisons.
-        let expected = Matrix::from([
+        let expected = Matrix4::from([
             [-0.50709, 0.50709, 0.67612, -2.36643],
             [0.76772, 0.60609, 0.12122, -2.82843],
             [-0.35857, 0.59761, -0.71714, 0.00000],
             [0.00000, 0.00000, 0.00000, 1.00000],
         ]);
-        check(t, expected);
+        matrices::check(t, expected);
     }
 }

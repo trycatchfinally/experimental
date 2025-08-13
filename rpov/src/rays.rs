@@ -13,6 +13,10 @@ pub fn ray(origin: Tuple4, direction: Tuple4) -> Ray {
 }
 
 impl Ray {
+    pub fn new(origin: Tuple4, direction: Tuple4) -> Self {
+        Self { origin, direction }
+    }
+
     pub fn position(&self, t: Float) -> Tuple4 {
         self.origin + self.direction * t
     }

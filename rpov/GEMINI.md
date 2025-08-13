@@ -24,6 +24,7 @@ This is a Rust project that implements a ray tracer. The goal is to create a sim
 
 ## Coding Style
 
+* Use crate::floats::Float instead of f32 or f64.
 * Follow the official Rust style guide.
 * Do not prefix function arguments with underscore.
 * Use snake_case for variable and function names.
