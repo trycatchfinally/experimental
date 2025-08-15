@@ -37,6 +37,13 @@ impl Material {
 mod tests {
     use super::*;
     use crate::colors::Color;
+    use crate::tuples::point;
+
+    fn test_setup() -> (Material, crate::tuples::Tuple4) {
+        let m = Material::new();
+        let position = point(0.0, 0.0, 0.0);
+        (m, position)
+    }
 
     #[test]
     fn the_default_material() {
@@ -72,5 +79,27 @@ mod tests {
         m.ambient = 1.0;
         s.material = m;
         assert_eq!(s.material, m);
+    }
+
+    // Scenario: Lighting with the surface in shadow
+    //   Given eyev ← vector(0, 0, -1)
+    //     And normalv ← vector(0, 0, -1)
+    //     And light ← point_light(point(0, 0, -10), color(1, 1, 1))
+    //     And in_shadow ← true
+    //   When result ← lighting(m, light, position, eyev, normalv, in_shadow)
+    //   Then result = color(0.1, 0.1, 0.1)
+    #[test]
+    fn lighting_with_the_surface_in_shadow() {
+        let (m, position) = test_setup();
+        let eyev = crate::tuples::vector(0.0, 0.0, -1.0);
+        let normalv = crate::tuples::vector(0.0, 0.0, -1.0);
+        let light = crate::lighting::point_light(
+            crate::tuples::point(0.0, 0.0, -10.0),
+            crate::colors::Color::new(1.0, 1.0, 1.0),
+        );
+        let in_shadow = true;
+        let result = crate::lighting::lighting(&m, &light, position, eyev, normalv, in_shadow);
+
+        assert_eq!(result, crate::colors::Color::new(0.1, 0.1, 0.1));
     }
 }

@@ -3,8 +3,8 @@ use indicatif::{ProgressBar, ProgressStyle};
 use crate::{
     canvas::Canvas,
     colors::Color,
-    floats::Float,
-    intersections::Intersection,
+    floats::{EPSILON, Float},
+    intersections::{Intersection, hit},
     lighting::{PointLight, point_light},
     materials::Material,
     rays::Ray,
@@ -56,12 +56,14 @@ impl World {
     }
     pub fn shade_hit(&self, comps: Computations) -> Color {
         let light = self.light.as_ref().expect("Light source not set in world");
+        let in_shadow = self.is_shadowed(comps.over_point);
         crate::lighting::lighting(
             &comps.object.material,
             light,
-            comps.point,
+            comps.over_point,
             comps.eyev,
             comps.normalv,
+            in_shadow,
         )
     }
 
@@ -75,6 +77,19 @@ impl World {
             }
             None => Color::new(0.0, 0.0, 0.0),
         }
+    }
+
+    pub fn is_shadowed(&self, point: Tuple4) -> bool {
+        let light = self.light.as_ref().expect("Light source not set in world");
+        let v = light.position - point;
+        let distance = v.magnitude();
+        let direction = v.normalize();
+
+        let r = Ray::new(point, direction);
+        let intersections = self.intersect(r);
+
+        let h = hit(&intersections);
+        h.is_some() && h.unwrap().t < distance
     }
 }
 
@@ -127,7 +142,7 @@ impl<'a> Intersection<'a> {
         if inside {
             normalv = -normalv;
         }
-        let over_point = point + normalv * 0.000_001;
+        let over_point = point + normalv * EPSILON;
         Computations {
             t: self.t,
             object: self.object,
@@ -317,5 +332,109 @@ mod tests {
         c.transform = crate::transformations::view_transform(from, to, up);
         let image = render(c, w);
         assert_eq!(image.pixel_at(5, 5), Color::new(0.38066, 0.47583, 0.2855));
+    }
+
+    // Scenario: There is no shadow when nothing is collinear with point and light
+    //   Given w ← default_world()
+    //     And p ← point(0, 10, 0)
+    //    Then is_shadowed(w, p) is false
+    #[test]
+    fn there_is_no_shadow_when_nothing_is_collinear_with_point_and_light() {
+        let w = default_world();
+        let p = point(0.0, 10.0, 0.0);
+        let is_shadowed = w.is_shadowed(p);
+        assert!(!is_shadowed);
+    }
+
+    // Scenario: The shadow when an object is between the point and the light
+    //   Given w ← default_world()
+    //     And p ← point(10, -10, 10)
+    //    Then is_shadowed(w, p) is true
+    #[test]
+    fn the_shadow_when_an_object_is_between_the_point_and_the_light() {
+        let w = default_world();
+        let p = point(10.0, -10.0, 10.0);
+        let is_shadowed = w.is_shadowed(p);
+        assert!(is_shadowed);
+    }
+
+    // Scenario: There is no shadow when an object is behind the light
+    //   Given w ← default_world()
+    //     And p ← point(-20, 20, -20)
+    //    Then is_shadowed(w, p) is false
+    #[test]
+    fn there_is_no_shadow_when_an_object_is_behind_the_light() {
+        let w = default_world();
+        let p = point(-20.0, 20.0, -20.0);
+        let is_shadowed = w.is_shadowed(p);
+        assert!(!is_shadowed);
+    }
+
+    // Scenario: There is no shadow when an object is behind the point
+    //   Given w ← default_world()
+    //     And p ← point(-2, 2, -2)
+    //    Then is_shadowed(w, p) is false
+    #[test]
+    fn there_is_no_shadow_when_an_object_is_behind_the_point() {
+        let w = default_world();
+        let p = point(-2.0, 2.0, -2.0);
+        let is_shadowed = w.is_shadowed(p);
+        assert!(!is_shadowed);
+    }
+
+    // Scenario: shade_hit() is given an intersection in shadow
+    //   Given w ← world()
+    //     And w.light ← point_light(point(0, 0, -10), color(1, 1, 1))
+    //     And s1 ← sphere()
+    //     And s1 is added to w
+    //     And s2 ← sphere() with:
+    //       | transform | translation(0, 0, 10) |
+    //     And s2 is added to w
+    //     And r ← ray(point(0, 0, 5), vector(0, 0, 1))
+    //     And i ← intersection(4, s2)
+    //   When comps ← prepare_computations(i, r)
+    //     And c ← shade_hit(w, comps)
+    //   Then c = color(0.1, 0.1, 0.1)
+    #[test]
+    fn shade_hit_is_given_an_intersection_in_shadow() {
+        let light = Some(point_light(
+            point(0.0, 0.0, -10.0),
+            Color::new(1.0, 1.0, 1.0),
+        ));
+        let s1 = Sphere::new();
+        let s2 = Sphere::with_transform(crate::transformations::translation(0.0, 0.0, 10.0));
+        let w = World {
+            light,
+            objects: vec![s1, s2],
+        };
+
+        let r = ray(point(0.0, 0.0, 5.0), vector(0.0, 0.0, 1.0));
+        let i = Intersection::new(4.0, &w.objects[1]);
+        let comps = i.prepare_computations(r);
+        let c = w.shade_hit(comps);
+        assert_eq!(c, Color::new(0.1, 0.1, 0.1));
+    }
+
+    // Scenario: The hit should offset the point
+    //   Given r ← ray(point(0, 0, -5), vector(0, 0, 1))
+    //     And shape ← sphere() with:
+    //       | transform | translation(0, 0, 1) |
+    //     And i ← intersection(5, shape)
+    //   When comps ← prepare_computations(i, r)
+    //   Then comps.over_point.z < -EPSILON/2
+    //     And comps.point.z > comps.over_point.z
+    #[test]
+    fn the_hit_should_offset_the_point() {
+        let r = ray(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
+        let mut shape = Sphere::new();
+        shape.transform = crate::transformations::translation(0.0, 0.0, 1.0);
+        let i = Intersection::new(5.0, &shape);
+        let comps = i.prepare_computations(r);
+        assert!(
+            comps.over_point.z < -(EPSILON / 2.0),
+            "{:?}",
+            comps.over_point
+        );
+        assert!(comps.point.z > comps.over_point.z);
     }
 }

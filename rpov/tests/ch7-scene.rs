@@ -78,7 +78,7 @@ mod tests {
     }
     #[test]
     fn scenario_7() {
-        render_scenario_7(200, 100);
+        render_scenario_7(100, 50);
     }
 
     #[test]

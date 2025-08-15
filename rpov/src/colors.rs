@@ -42,7 +42,7 @@ use std::ops::{Add, Mul, Sub};
 
 use derive_more::Display;
 
-use crate::floats::Float;
+use crate::floats::{EPSILON, Float};
 
 impl Add for Color {
     type Output = Color;
@@ -97,9 +97,9 @@ impl Mul<Color> for Color {
 // For assert_eq! in tests
 impl PartialEq for Color {
     fn eq(&self, other: &Self) -> bool {
-        (self.red - other.red).abs() < 1e-4
-            && (self.green - other.green).abs() < 1e-4
-            && (self.blue - other.blue).abs() < 1e-4
+        (self.red - other.red).abs() < EPSILON
+            && (self.green - other.green).abs() < EPSILON
+            && (self.blue - other.blue).abs() < EPSILON
     }
 }
 

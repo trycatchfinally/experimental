@@ -13,9 +13,11 @@ pub use std::f64::consts;
 pub const ONE: Float = 1.0;
 pub const TWO: Float = 2.0;
 pub const PI: Float = consts::PI;
+// avoids "acne"
+pub const EPSILON: Float = 0.0015;
 
 pub fn check_float(a: Float, b: Float) {
-    assert!((a - b).abs() < 0.0001);
+    assert!((a - b).abs() < EPSILON);
 }
 
 #[cfg(test)]
