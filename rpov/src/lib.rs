@@ -8,6 +8,7 @@ pub mod materials;
 pub mod matrices;
 pub mod normals;
 pub mod rays;
+pub mod shapes;
 pub mod spheres;
 pub mod transformations;
 pub mod tuples;

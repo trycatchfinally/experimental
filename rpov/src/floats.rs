@@ -13,6 +13,7 @@ pub use std::f64::consts;
 pub const ONE: Float = 1.0;
 pub const TWO: Float = 2.0;
 pub const PI: Float = consts::PI;
+pub const SQRT_2: Float = consts::SQRT_2;
 // avoids "acne"
 pub const EPSILON: Float = 0.0015;
 
