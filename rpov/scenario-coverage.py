@@ -25,7 +25,7 @@ def display_coverage():
     unique_implemented = set(implemented)
 
     rows = []
-    for f in scenario_files:
+    for f in sorted(scenario_files):
         for_file = file_to_scenarios(f)
 
         covered = [s for s in for_file if s in unique_implemented]

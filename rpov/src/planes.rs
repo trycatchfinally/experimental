@@ -27,7 +27,7 @@ impl ShapeFunctions for Plane {
     }
 
     fn local_intersect<'a>(&'a self, _local_ray: Ray) -> Vec<Intersection<'a>> {
-        todo!()
+        vec![]
     }
 
     fn local_normal_at(&self, _local_point: &Tuple4) -> Tuple4 {
@@ -64,12 +64,26 @@ mod tests {
     //     And r ← ray(point(0, 10, 0), vector(0, 0, 1))
     //   When xs ← local_intersect(p, r)
     //   Then xs is empty
+    #[test]
+    fn intersect_with_a_ray_parallel_to_the_plane() {
+        let p = Plane::default();
+        let r = Ray::new(point(0.0, 10.0, 0.0), vector(0.0, 0.0, 1.0));
+        let xs = p.local_intersect(r);
+        assert!(xs.is_empty());
+    }
 
     // Scenario: Intersect with a coplanar ray
     //   Given p ← plane()
     //     And r ← ray(point(0, 0, 0), vector(0, 0, 1))
     //   When xs ← local_intersect(p, r)
     //   Then xs is empty
+    #[test]
+    fn intersect_with_a_coplanar_ray() {
+        let p = Plane::default();
+        let r = Ray::new(point(0.0, 0.0, 0.0), vector(0.0, 0.0, 1.0));
+        let xs = p.local_intersect(r);
+        assert!(xs.is_empty());
+    }
 
     // Scenario: A ray intersecting a plane from above
     //   Given p ← plane()
@@ -78,6 +92,15 @@ mod tests {
     //   Then xs.count = 1
     //     And xs[0].t = 1
     //     And xs[0].object = p
+    #[test]
+    fn a_ray_intersecting_a_plane_from_above() {
+        let p = Plane::default();
+        let r = Ray::new(point(0.0, 1.0, 0.0), vector(0.0, -1.0, 0.0));
+        let xs = p.local_intersect(r);
+        assert_eq!(xs.len(), 1);
+        assert_eq!(xs[0].t, 1.0);
+        assert_eq!(xs[0].object, &p);
+    }
 
     // Scenario: A ray intersecting a plane from below
     //   Given p ← plane()
@@ -86,4 +109,13 @@ mod tests {
     //   Then xs.count = 1
     //     And xs[0].t = 1
     //     And xs[0].object = p
+    #[test]
+    fn a_ray_intersecting_a_plane_from_below() {
+        let p = Plane::default();
+        let r = Ray::new(point(0.0, -1.0, 0.0), vector(0.0, 1.0, 0.0));
+        let xs = p.local_intersect(r);
+        assert_eq!(xs.len(), 1);
+        assert_eq!(xs[0].t, 1.0);
+        assert_eq!(xs[0].object, &p);
+    }
 }
