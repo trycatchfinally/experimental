@@ -10,7 +10,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 static SPHERE_ID_COUNTER: AtomicU64 = AtomicU64::new(0);
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Sphere {
     pub id: u64,
     pub transform: Matrix4,
@@ -79,6 +79,10 @@ impl ShapeFunctions for Sphere {
 
     fn transform_inverse(&self) -> Matrix4 {
         self.transform.inverse()
+    }
+
+    fn material(&self) -> &Material {
+        &self.material
     }
 
     fn local_normal_at(&self, local_point: &Tuple4) -> Tuple4 {

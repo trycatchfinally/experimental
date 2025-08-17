@@ -43,6 +43,7 @@ pub trait ShapeFunctions {
         world_normal.normalize()
     }
 
+    fn material(&self) -> &Material;
     fn transform_inverse(&self) -> Matrix4;
     fn local_intersect<'a>(&'a self, local_ray: Ray) -> Vec<Intersection<'a>>;
     fn local_normal_at(&self, local_point: &Tuple4) -> Tuple4;
@@ -51,6 +52,10 @@ pub trait ShapeFunctions {
 impl ShapeFunctions for TestShape {
     fn transform_inverse(&self) -> Matrix4 {
         self.transform.inverse()
+    }
+
+    fn material(&self) -> &Material {
+        &self.material
     }
 
     fn local_intersect<'a>(&'a self, local_ray: Ray) -> Vec<Intersection<'a>> {

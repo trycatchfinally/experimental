@@ -19,7 +19,6 @@ pub struct World {
     pub light: Option<PointLight>,
 }
 
-#[derive(Debug, Copy, Clone)]
 pub struct Computations<'a> {
     pub t: Float,
     pub object: &'a Sphere,
@@ -59,7 +58,7 @@ impl World {
         let light = self.light.as_ref().expect("Light source not set in world");
         let in_shadow = self.is_shadowed(comps.over_point);
         crate::lighting::lighting(
-            &comps.object.material,
+            &comps.object.material(),
             light,
             comps.over_point,
             comps.eyev,

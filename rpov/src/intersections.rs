@@ -1,8 +1,8 @@
-use crate::{floats::Float, spheres::Sphere};
-use derive_more::Display;
+use std::fmt::Debug;
 
-#[derive(Debug, PartialEq, Clone, Copy, Display)] // Add Display to the derive macro
-#[display("Intersection(t = {}, object = {})", t, object)]
+use crate::{floats::Float, spheres::Sphere};
+// You can still derive Copy and Clone, as the reference is copyable.
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Intersection<'a> {
     pub t: Float,
     pub object: &'a Sphere,
@@ -12,10 +12,6 @@ impl<'a> Intersection<'a> {
     pub fn new(t: Float, object: &'a Sphere) -> Self {
         Self { t, object }
     }
-}
-
-pub fn intersections<'a>(intersections: &[Intersection<'a>]) -> Vec<Intersection<'a>> {
-    intersections.to_vec()
 }
 
 pub fn hit<'a>(intersections: &[Intersection<'a>]) -> Option<Intersection<'a>> {
@@ -28,6 +24,8 @@ pub fn hit<'a>(intersections: &[Intersection<'a>]) -> Option<Intersection<'a>> {
 
 #[cfg(test)]
 mod tests {
+    use std::vec;
+
     use super::*;
     use crate::{
         rays::ray, shapes::ShapeFunctions, spheres::Sphere, tuples::point, tuples::vector,
@@ -59,7 +57,7 @@ mod tests {
         let s = Sphere::new();
         let i1 = Intersection::new(1.0, &s);
         let i2 = Intersection::new(2.0, &s);
-        let xs = intersections(&[i1, i2]);
+        let xs = vec![i1, i2];
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 1.0);
         assert_eq!(xs[1].t, 2.0);
@@ -94,7 +92,7 @@ mod tests {
         let s = Sphere::new();
         let i1 = Intersection::new(1.0, &s);
         let i2 = Intersection::new(2.0, &s);
-        let xs = intersections(&[i2, i1]);
+        let xs = vec![i2, i1];
         let i = hit(&xs);
         assert_eq!(i, Some(i1));
     }
@@ -111,7 +109,7 @@ mod tests {
         let s = Sphere::new();
         let i1 = Intersection::new(-1.0, &s);
         let i2 = Intersection::new(1.0, &s);
-        let xs = intersections(&[i2, i1]);
+        let xs = vec![i2, i1];
         let i = hit(&xs);
         assert_eq!(i, Some(i2));
     }
@@ -128,7 +126,7 @@ mod tests {
         let s = Sphere::new();
         let i1 = Intersection::new(-2.0, &s);
         let i2 = Intersection::new(-1.0, &s);
-        let xs = intersections(&[i2, i1]);
+        let xs = vec![i2, i1];
         let i = hit(&xs);
         assert_eq!(i, None);
     }
@@ -149,7 +147,7 @@ mod tests {
         let i2 = Intersection::new(7.0, &s);
         let i3 = Intersection::new(-3.0, &s);
         let i4 = Intersection::new(2.0, &s);
-        let xs = intersections(&[i1, i2, i3, i4]);
+        let xs = vec![i1, i2, i3, i4];
         let i = hit(&xs);
         assert_eq!(i, Some(i4));
         assert_eq!(i.unwrap().t, 2.0);
