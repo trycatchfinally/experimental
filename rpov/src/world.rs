@@ -1,8 +1,10 @@
 use indicatif::{ProgressBar, ProgressStyle};
 
+use std::cell::Cell;
+
 use crate::{
     canvas::Canvas,
-    colors::Color,
+    colors::{COLOR_BLACK, Color},
     floats::{EPSILON, Float},
     intersections::{Intersection, Shape, hit},
     lighting::{PointLight, point_light},
@@ -40,6 +42,13 @@ impl Default for World {
     }
 }
 
+// Declare a thread-local static variable to count recursion depth.
+// It's initialized to 0 for each thread.
+thread_local!(static RECURSION_DEPTH: Cell<u32> = Cell::new(0));
+
+// Define your maximum recursion depth.
+const MAX_RECURSION_DEPTH: u32 = 3;
+
 impl World {
     pub fn new() -> Self {
         Self {
@@ -60,16 +69,20 @@ impl World {
     pub fn intersect(&self, r: Ray) -> Intersections {
         let mut all_intersections = Vec::new();
         for object in &self.objects {
-            let mut intersections = object.intersect(r);
-            all_intersections.append(&mut intersections);
+            all_intersections.append(&mut object.intersect(r));
         }
+        for plane in &self.planes {
+            all_intersections.append(&mut plane.intersect(r));
+        }
+
         all_intersections.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
         all_intersections
     }
+
     pub fn shade_hit(&self, comps: Computations) -> Color {
         let light = self.light.as_ref().expect("Light source not set in world");
         let in_shadow = self.is_shadowed(comps.over_point);
-        crate::lighting::lighting(
+        let surface = crate::lighting::lighting(
             comps.object.material(),
             comps.object,
             light,
@@ -77,19 +90,34 @@ impl World {
             comps.eyev,
             comps.normalv,
             in_shadow,
-        )
+        );
+
+        let reflected = self.reflected_color(comps);
+        surface + reflected
     }
 
     pub fn color_at(&self, r: Ray) -> Color {
-        let xs = self.intersect(r);
-        let hit = crate::intersections::hit(&xs);
-        match hit {
-            Some(i) => {
-                let comps = i.prepare_computations(r);
-                self.shade_hit(comps)
+        RECURSION_DEPTH.with(|depth| {
+            let current_depth = depth.get();
+            println!("depth: {:?}", current_depth);
+            // 1. Check if the depth limit has been exceeded.
+            if current_depth >= MAX_RECURSION_DEPTH {
+                return COLOR_BLACK; // Bail out
             }
-            None => Color::new(0.0, 0.0, 0.0),
-        }
+            depth.set(current_depth + 1);
+            let xs = self.intersect(r);
+            let hit = crate::intersections::hit(&xs);
+            let color = match hit {
+                Some(i) => {
+                    let comps = i.prepare_computations(r);
+                    self.shade_hit(comps)
+                }
+                None => COLOR_BLACK,
+            };
+
+            depth.set(current_depth);
+            color
+        })
     }
 
     pub fn is_shadowed(&self, point: Tuple4) -> bool {
@@ -106,9 +134,14 @@ impl World {
     }
 
     pub fn reflected_color(&self, comps: Computations) -> Color {
+        let r = comps.object.material().reflective;
+        if r < EPSILON {
+            return COLOR_BLACK;
+        }
+
         let reflect_ray = Ray::new(comps.over_point, comps.reflectv);
         let color = self.color_at(reflect_ray);
-        color * comps.object.material().reflective
+        color * r
     }
 }
 
@@ -520,5 +553,103 @@ mod tests {
         let color = w.reflected_color(comps);
         //   Then color = color(0.19032, 0.2379, 0.14274)
         assert_eq!(color, Color::new(0.19032, 0.2379, 0.14274));
+    }
+
+    // Scenario: shade_hit() with a reflective material
+    //   Given w ← default_world()
+    //     And shape ← plane() with:
+    //       | material.reflective | 0.5                   |
+    //       | transform           | translation(0, -1, 0) |
+    //     And shape is added to w
+    //     And r ← ray(point(0, 0, -3), vector(0, -√2/2, √2/2))
+    //     And i ← intersection(√2, shape)
+    //   When comps ← prepare_computations(i, r)
+    //     And color ← shade_hit(w, comps)
+    //   Then color = color(0.87677, 0.92436, 0.82918)
+    #[test]
+    fn shade_hit_with_a_reflective_material() {
+        let mut w = default_world();
+        let mut shape = Plane::default();
+        shape.material.reflective = 0.5;
+        shape.transform = crate::transformations::translation(0.0, -1.0, 0.0);
+        w.planes.push(shape);
+        //     And r ← ray(point(0, 0, -3), vector(0, -√2/2, √2/2))
+        let r = ray(
+            point(0.0, 0.0, -3.0),
+            vector(0.0, -SQRT_2 / 2.0, SQRT_2 / 2.0),
+        );
+        //     And i ← intersection(√2, shape)
+        let i = Intersection::new(SQRT_2, &shape);
+        //   When comps ← prepare_computations(i, r)
+        let comps = i.prepare_computations(r);
+        //     And color ← shade_hit(w, comps)
+        let color = w.shade_hit(comps);
+        //   Then color = color(0.87677, 0.92436, 0.82918)
+        assert_eq!(color, Color::new(0.87677, 0.92436, 0.82918));
+    }
+
+    // Scenario: color_at() with mutually reflective surfaces
+    //   Given w ← world()
+    //     And w.light ← point_light(point(0, 0, 0), color(1, 1, 1))
+    //     And lower ← plane() with:
+    //       | material.reflective | 1                     |
+    //       | transform           | translation(0, -1, 0) |
+    //     And lower is added to w
+    //     And upper ← plane() with:
+    //       | material.reflective | 1                    |
+    //       | transform           | translation(0, 1, 0) |
+    //     And upper is added to w
+    //     And r ← ray(point(0, 0, 0), vector(0, 1, 0))
+    //   Then color_at(w, r) should terminate successfully
+    #[test]
+    fn color_at_with_mutually_reflective_surfaces() {
+        let mut w = World::with_light(point_light(point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
+        let mut lower = Plane::default();
+        lower.material.reflective = 1.0;
+        lower.transform = crate::transformations::translation(0.0, -1.0, 0.0);
+        w.planes.push(lower);
+
+        let mut upper = Plane::default();
+        upper.material.reflective = 1.0;
+        upper.transform = crate::transformations::translation(0.0, 1.0, 0.0);
+        w.planes.push(upper);
+
+        let r = ray(point(0.0, 0.0, 0.0), vector(0.0, 1.0, 0.0));
+        // This test primarily checks for infinite recursion. If it completes, it passes.
+        w.color_at(r);
+    }
+
+    // Scenario: The reflected color at the maximum recursive depth
+    //   Given w ← default_world()
+    //     And shape ← plane() with:
+    //       | material.reflective | 0.5                   |
+    //       | transform           | translation(0, -1, 0) |
+    //     And shape is added to w
+    //     And r ← ray(point(0, 0, -3), vector(0, -√2/2, √2/2))
+    //     And i ← intersection(√2, shape)
+    //   When comps ← prepare_computations(i, r)
+    //     And color ← reflected_color(w, comps, 0)
+    //   Then color = color(0, 0, 0)
+    #[test]
+    pub fn the_reflected_color_at_the_maximum_recursive_depth() {
+        let mut w = default_world();
+        let mut shape = Plane::default();
+        shape.material.reflective = 0.5;
+        shape.transform = crate::transformations::translation(0.0, -1.0, 0.0);
+        w.planes.push(shape);
+        let r = ray(
+            point(0.0, 0.0, -3.0),
+            vector(0.0, -SQRT_2 / 2.0, SQRT_2 / 2.0),
+        );
+        let i = Intersection::new(SQRT_2, &shape);
+        let comps = i.prepare_computations(r);
+        RECURSION_DEPTH.with(|depth| {
+            depth.set(MAX_RECURSION_DEPTH);
+            let color = w.reflected_color(comps);
+            assert_eq!(color, Color::new(0.0, 0.0, 0.0));
+        });
+        RECURSION_DEPTH.with(|depth| {
+            depth.set(0);
+        });
     }
 }

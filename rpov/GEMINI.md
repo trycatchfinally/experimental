@@ -44,9 +44,12 @@ This is a Rust project that implements a ray tracer. The goal is to create a sim
 
 ## General guidance for automation
 
+* When I say "implement this unit test", only implement the test code inside the current 'mod tests' context.
+* Ask for permission before modifying function parameters or refactoring.
 * Never remove files I created. Do not suggest or try to run the 'rm' command.
 * It's okay to implement structs and constructors.
 * Always ask before implementing non-trivial functionality.
 * It's okay to add unit tests and statements in unit tests that don't compile or don't pass.
+* Always do exactly what the English text in the scenario says, even if it will not work.
 * Always check to see if a file exists before creating it.
 * Never suggest `git` operations.
