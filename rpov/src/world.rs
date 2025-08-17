@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use indicatif::{ProgressBar, ProgressStyle};
 
 use crate::{
@@ -9,6 +7,7 @@ use crate::{
     intersections::{Intersection, Shape, hit},
     lighting::{PointLight, point_light},
     materials::Material,
+    planes::Plane,
     rays::Ray,
     shapes::Intersectable,
     spheres::Sphere,
@@ -19,6 +18,7 @@ use crate::{
 pub struct World {
     pub objects: Vec<Sphere>,
     pub light: Option<PointLight>,
+    pub planes: Vec<Plane>,
 }
 
 pub struct Computations<'a> {
@@ -45,6 +45,15 @@ impl World {
         Self {
             objects: vec![],
             light: None,
+            planes: vec![],
+        }
+    }
+
+    pub fn with_light(light: PointLight) -> Self {
+        Self {
+            objects: vec![],
+            light: Some(light),
+            planes: vec![],
         }
     }
 
@@ -140,6 +149,7 @@ pub fn default_world() -> World {
     World {
         objects: vec![s1, s2],
         light: Some(light),
+        planes: vec![],
     }
 }
 
@@ -422,8 +432,9 @@ mod tests {
         let s1 = Sphere::new();
         let s2 = Sphere::with_transform(crate::transformations::translation(0.0, 0.0, 10.0));
         let w = World {
-            light,
             objects: vec![s1, s2],
+            light,
+            ..World::new()
         };
 
         let r = ray(point(0.0, 0.0, 5.0), vector(0.0, 0.0, 1.0));
@@ -471,13 +482,10 @@ mod tests {
         let r = ray(point(0.0, 0.0, 0.0), vector(0.0, 0.0, 1.0));
         let mut shape = w.objects[1];
         shape.material.ambient = 1.0;
-        todo!(
-            "let i = Intersection::new(1.0, shape);
+        let i = Intersection::new(1.0, &shape);
         let comps = i.prepare_computations(r);
         let color = w.reflected_color(comps);
         assert_eq!(color, Color::new(0.0, 0.0, 0.0));
-        "
-        );
     }
 
     // Scenario: The reflected color for a reflective material
@@ -486,15 +494,18 @@ mod tests {
     //       | material.reflective | 0.5                   |
     //       | transform           | translation(0, -1, 0) |
     //     And shape is added to w
-
+    //     And r ← ray(point(0, 0, -3), vector(0, -√2/2, √2/2))
+    //     And i ← intersection(√2, shape)
+    //   When comps ← prepare_computations(i, r)
+    //     And color ← reflected_color(w, comps)
+    //   Then color = color(0.19032, 0.2379, 0.14274)
     #[test]
     fn the_reflected_color_for_a_reflective_material() {
-        let w = default_world();
+        let mut w = default_world();
         let mut shape = Plane::default();
         shape.material.reflective = 0.5;
         shape.transform = crate::transformations::translation(0.0, -1.0, 0.0);
-        todo!("w.objects.push(shape);");
-
+        w.planes.push(shape);
         //     And r ← ray(point(0, 0, -3), vector(0, -√2/2, √2/2))
         let r = ray(
             point(0.0, 0.0, -3.0),

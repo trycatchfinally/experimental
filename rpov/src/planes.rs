@@ -7,7 +7,7 @@ use crate::{
     tuples::{Tuple4, vector},
 };
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub struct Plane {
     pub transform: Matrix4,
     pub material: Material,
