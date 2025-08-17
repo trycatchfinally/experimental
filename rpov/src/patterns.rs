@@ -1,16 +1,62 @@
 // Feature: Patterns
+use crate::{colors::Color, intersections::Shape, matrices::Matrix4};
 
-#![cfg(test)]
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub struct StripePattern {
+    pub a: Color,
+    pub b: Color,
+    pub transform: Matrix4,
+}
+
+pub fn stripe_pattern(a: Color, b: Color) -> StripePattern {
+    StripePattern {
+        a,
+        b,
+        transform: Matrix4::identity(),
+    }
+}
+impl StripePattern {
+    pub fn stripe_at(&self, point: crate::tuples::Tuple4) -> Color {
+        if point.x.floor() as i32 % 2 == 0 {
+            self.a
+        } else {
+            self.b
+        }
+    }
+
+    pub fn stripe_at_object(
+        &self,
+        object: &dyn Shape,
+        world_point: crate::tuples::Tuple4,
+    ) -> Color {
+        let object_point = object.transform_inverse() * world_point;
+        let pattern_point = self.transform.inverse() * object_point;
+
+        self.stripe_at(pattern_point)
+    }
+}
+
+#[cfg(test)]
 mod tests {
 
-    // Background:
-    //   Given black ← color(0, 0, 0)
-    //     And white ← color(1, 1, 1)
+    use crate::{colors::Color, patterns::StripePattern, patterns::stripe_pattern, tuples::point};
+    fn default_white_black_stripe() -> (Color, Color, StripePattern) {
+        let white = Color::new(1.0, 1.0, 1.0);
+        let black = Color::new(0.0, 0.0, 0.0);
+        (white, black, stripe_pattern(white, black))
+    }
 
     // Scenario: Creating a stripe pattern
     //   Given pattern ← stripe_pattern(white, black)
     //   Then pattern.a = white
     //     And pattern.b = black
+    #[test]
+    fn creating_a_stripe_pattern() {
+        let (white, black, pattern) = default_white_black_stripe();
+
+        assert_eq!(pattern.a, white);
+        assert_eq!(pattern.b, black);
+    }
 
     // Scenario: A stripe pattern is constant in y
     //   Given pattern ← stripe_pattern(white, black)
@@ -18,11 +64,26 @@ mod tests {
     //     And stripe_at(pattern, point(0, 1, 0)) = white
     //     And stripe_at(pattern, point(0, 2, 0)) = white
 
+    #[test]
+    fn a_stripe_pattern_is_constant_in_y() {
+        let (white, _black, pattern) = default_white_black_stripe();
+        assert_eq!(pattern.stripe_at(point(0.0, 0.0, 0.0)), white);
+        assert_eq!(pattern.stripe_at(point(0.0, 1.0, 0.0)), white);
+        assert_eq!(pattern.stripe_at(point(0.0, 2.0, 0.0)), white);
+    }
+
     // Scenario: A stripe pattern is constant in z
     //   Given pattern ← stripe_pattern(white, black)
     //   Then stripe_at(pattern, point(0, 0, 0)) = white
     //     And stripe_at(pattern, point(0, 0, 1)) = white
     //     And stripe_at(pattern, point(0, 0, 2)) = white
+    #[test]
+    fn a_stripe_pattern_is_constant_in_z() {
+        let (white, _black, pattern) = default_white_black_stripe();
+        assert_eq!(pattern.stripe_at(point(0.0, 0.0, 0.0)), white);
+        assert_eq!(pattern.stripe_at(point(0.0, 0.0, 1.0)), white);
+        assert_eq!(pattern.stripe_at(point(0.0, 0.0, 2.0)), white);
+    }
 
     // Scenario: A stripe pattern alternates in x
     //   Given pattern ← stripe_pattern(white, black)
@@ -32,6 +93,48 @@ mod tests {
     //     And stripe_at(pattern, point(-0.1, 0, 0)) = black
     //     And stripe_at(pattern, point(-1, 0, 0)) = black
     //     And stripe_at(pattern, point(-1.1, 0, 0)) = white
+    #[test]
+    fn a_stripe_pattern_alternates_in_x() {
+        let (white, black, pattern) = default_white_black_stripe();
+        assert_eq!(pattern.stripe_at(point(0.0, 0.0, 0.0)), white);
+        assert_eq!(pattern.stripe_at(point(0.9, 0.0, 0.0)), white);
+        assert_eq!(pattern.stripe_at(point(1.0, 0.0, 0.0)), black);
+        assert_eq!(pattern.stripe_at(point(-0.1, 0.0, 0.0)), black);
+        assert_eq!(pattern.stripe_at(point(-1.0, 0.0, 0.0)), black);
+        assert_eq!(pattern.stripe_at(point(-1.1, 0.0, 0.0)), white);
+    }
+
+    // Scenario: Lighting with a pattern applied
+    //   Given m.pattern ← stripe_pattern(color(1, 1, 1), color(0, 0, 0))
+    //     And m.ambient ← 1
+    //     And m.diffuse ← 0
+    //     And m.specular ← 0
+    //     And eyev ← vector(0, 0, -1)
+    //     And normalv ← vector(0, 0, -1)
+    //     And light ← point_light(point(0, 0, -10), color(1, 1, 1))
+    //   When c1 ← lighting(m, light, point(0.9, 0, 0), eyev, normalv, false)
+    //     And c2 ← lighting(m, light, point(1.1, 0, 0), eyev, normalv, false)
+    //   Then c1 = color(1, 1, 1)
+    //     And c2 = color(0, 0, 0)
+
+    #[test]
+    fn lighting_with_a_pattern_applied() {
+        let mut m = crate::materials::Material::new();
+        m.pattern = Some(stripe_pattern(
+            Color::new(1.0, 1.0, 1.0),
+            Color::new(0.0, 0.0, 0.0),
+        ));
+        m.ambient = 1.0;
+        m.diffuse = 0.0;
+        m.specular = 0.0;
+        let eyev = crate::tuples::vector(0.0, 0.0, -1.0);
+        let normalv = crate::tuples::vector(0.0, 0.0, -1.0);
+        let light = crate::lighting::point_light(point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let c1 = crate::lighting::lighting(&m, &light, point(0.9, 0.0, 0.0), eyev, normalv, false);
+        let c2 = crate::lighting::lighting(&m, &light, point(1.1, 0.0, 0.0), eyev, normalv, false);
+        assert_eq!(c1, Color::new(1.0, 1.0, 1.0));
+        assert_eq!(c2, Color::new(0.0, 0.0, 0.0));
+    }
 
     // Scenario: Stripes with an object transformation
     //   Given object ← sphere()
@@ -40,6 +143,15 @@ mod tests {
     //   When c ← stripe_at_object(pattern, object, point(1.5, 0, 0))
     //   Then c = white
 
+    #[test]
+    fn stripes_with_an_object_transformation() {
+        let mut object = crate::spheres::Sphere::new();
+        object.transform = crate::transformations::scaling(2.0, 2.0, 2.0);
+        let (white, _black, pattern) = default_white_black_stripe();
+        let c = pattern.stripe_at_object(&object, point(1.5, 0.0, 0.0));
+        assert_eq!(c, white);
+    }
+
     // Scenario: Stripes with a pattern transformation
     //   Given object ← sphere()
     //     And pattern ← stripe_pattern(white, black)
@@ -47,6 +159,14 @@ mod tests {
     //   When c ← stripe_at_object(pattern, object, point(1.5, 0, 0))
     //   Then c = white
 
+    #[test]
+    fn stripes_with_a_pattern_transformation() {
+        let object = crate::spheres::Sphere::new();
+        let (white, _black, mut pattern) = default_white_black_stripe();
+        pattern.transform = crate::transformations::scaling(2.0, 2.0, 2.0);
+        let c = pattern.stripe_at_object(&object, point(1.5, 0.0, 0.0));
+        assert_eq!(c, white);
+    }
     // Scenario: Stripes with both an object and a pattern transformation
     //   Given object ← sphere()
     //     And set_transform(object, scaling(2, 2, 2))
@@ -54,6 +174,18 @@ mod tests {
     //     And set_pattern_transform(pattern, translation(0.5, 0, 0))
     //   When c ← stripe_at_object(pattern, object, point(2.5, 0, 0))
     //   Then c = white
+
+    #[test]
+    fn stripes_with_both_an_object_and_a_pattern_transformation() {
+        let mut object = crate::spheres::Sphere::new();
+        object.transform = crate::transformations::scaling(2.0, 2.0, 2.0);
+        let (white, _black, mut pattern) = default_white_black_stripe();
+        pattern.transform = crate::transformations::translation(0.5, 0.0, 0.0);
+        let c = pattern.stripe_at_object(&object, point(2.5, 0.0, 0.0));
+        assert_eq!(c, white);
+    }
+
+    // Stop here.
 
     // Scenario: The default pattern transformation
     //   Given pattern ← test_pattern()

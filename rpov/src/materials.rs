@@ -3,6 +3,7 @@ use crate::floats::Float;
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Material {
     pub color: crate::colors::Color,
+    pub pattern: Option<crate::patterns::StripePattern>,
     pub ambient: Float,
     pub diffuse: Float,
     pub specular: Float,
@@ -19,6 +20,7 @@ impl Material {
     pub fn new() -> Self {
         Material {
             color: crate::colors::Color::new(1.0, 1.0, 1.0),
+            pattern: None,
             ambient: 0.1,
             diffuse: 0.9,
             specular: 0.9,
