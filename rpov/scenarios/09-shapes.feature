@@ -9,7 +9,7 @@ Scenario: Assigning a transformation to a shape
   When set_transform(s, translation(2, 3, 4))
   Then s.transform = translation(2, 3, 4)
 
-Scenario: The default material
+Scenario: The default material for a shape
   Given s ← test_shape()
   When m ← s.material
   Then m = material()
