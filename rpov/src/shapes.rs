@@ -28,12 +28,20 @@ impl TestShape {
         }
     }
 }
-pub trait ShapeFunctions {
-    fn intersect<'a>(&'a self, ray: Ray) -> Vec<Intersection<'a>> {
+
+pub trait Intersectable<T: ShapeFunctions> {
+    fn intersect<'a>(&'a self, ray: Ray) -> Vec<Intersection<'a>>
+    where
+        Self: ShapeFunctions,
+    {
         let local_ray = ray.transform(self.transform_inverse());
         self.local_intersect(local_ray)
     }
+    fn local_intersect<'a>(&'a self, local_ray: Ray) -> Vec<Intersection<'a>>;
+}
 
+pub trait ShapeFunctions {
+    fn transform_inverse(&self) -> Matrix4;
     fn normal_at(&self, world_point: &Tuple4) -> Tuple4 {
         let ti = self.transform_inverse();
         let local_point = ti * *world_point;
@@ -44,8 +52,6 @@ pub trait ShapeFunctions {
     }
 
     fn material(&self) -> &Material;
-    fn transform_inverse(&self) -> Matrix4;
-    fn local_intersect<'a>(&'a self, local_ray: Ray) -> Vec<Intersection<'a>>;
     fn local_normal_at(&self, local_point: &Tuple4) -> Tuple4;
 }
 
@@ -58,13 +64,15 @@ impl ShapeFunctions for TestShape {
         &self.material
     }
 
+    fn local_normal_at(&self, world_point: &Tuple4) -> Tuple4 {
+        point(world_point.x, world_point.y, world_point.z)
+    }
+}
+
+impl Intersectable<TestShape> for TestShape {
     fn local_intersect<'a>(&'a self, local_ray: Ray) -> Vec<Intersection<'a>> {
         *self.saved_ray.borrow_mut() = Some(local_ray);
         vec![]
-    }
-
-    fn local_normal_at(&self, world_point: &Tuple4) -> Tuple4 {
-        point(world_point.x, world_point.y, world_point.z)
     }
 }
 

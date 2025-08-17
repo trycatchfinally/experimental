@@ -1,9 +1,14 @@
 use crate::{
-    intersections::Intersection, materials::Material, matrices::Matrix4, rays::Ray,
-    shapes::ShapeFunctions, tuples::Tuple4, tuples::vector,
+    intersections::Intersection,
+    materials::Material,
+    matrices::Matrix4,
+    rays::Ray,
+    shapes::{Intersectable, ShapeFunctions},
+    tuples::{Tuple4, vector},
 };
 
-struct Plane {
+#[derive(PartialEq, Debug)]
+pub struct Plane {
     transform: Matrix4,
     material: Material,
 }
@@ -26,19 +31,30 @@ impl ShapeFunctions for Plane {
         &self.material
     }
 
-    fn local_intersect<'a>(&'a self, _local_ray: Ray) -> Vec<Intersection<'a>> {
-        vec![]
-    }
-
     fn local_normal_at(&self, _local_point: &Tuple4) -> Tuple4 {
         vector(0.0, 1.0, 0.0)
+    }
+}
+
+impl Intersectable<Plane> for Plane {
+    fn local_intersect<'a>(&'a self, _local_ray: Ray) -> Vec<Intersection<'a>> {
+        // implement this for plane
+        if _local_ray.direction.y.abs() < crate::floats::EPSILON {
+            return vec![];
+        }
+
+        let t = -_local_ray.origin.y / _local_ray.direction.y;
+        vec![Intersection::new(t, self)]
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tuples::{point, vector};
+    use crate::{
+        assert_same_object,
+        tuples::{point, vector},
+    };
 
     // Scenario: The normal of a plane is constant everywhere
     //   Given p ← plane()
@@ -99,7 +115,7 @@ mod tests {
         let xs = p.local_intersect(r);
         assert_eq!(xs.len(), 1);
         assert_eq!(xs[0].t, 1.0);
-        assert_eq!(xs[0].object, &p);
+        assert_same_object!(xs[0].object, &p);
     }
 
     // Scenario: A ray intersecting a plane from below
@@ -116,6 +132,6 @@ mod tests {
         let xs = p.local_intersect(r);
         assert_eq!(xs.len(), 1);
         assert_eq!(xs[0].t, 1.0);
-        assert_eq!(xs[0].object, &p);
+        assert_same_object!(xs[0].object, &p);
     }
 }

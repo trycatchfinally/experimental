@@ -2,6 +2,7 @@ use crate::intersections::Intersection;
 use crate::materials::Material;
 use crate::matrices::Matrix4;
 use crate::rays::Ray;
+use crate::shapes::Intersectable;
 use crate::shapes::ShapeFunctions;
 use crate::tuples::Tuple4;
 use crate::tuples::point;
@@ -53,6 +54,20 @@ impl Sphere {
     }
 }
 impl ShapeFunctions for Sphere {
+    fn transform_inverse(&self) -> Matrix4 {
+        self.transform.inverse()
+    }
+
+    fn material(&self) -> &Material {
+        &self.material
+    }
+
+    fn local_normal_at(&self, local_point: &Tuple4) -> Tuple4 {
+        *local_point - point(0.0, 0.0, 0.0)
+    }
+}
+
+impl Intersectable<Sphere> for Sphere {
     fn local_intersect<'a>(&'a self, local_ray: Ray) -> Vec<Intersection<'a>> {
         // let local_ray = r.transform(self.transform.inverse());
         let sphere_to_ray = local_ray.origin - point(0.0, 0.0, 0.0);
@@ -75,18 +90,6 @@ impl ShapeFunctions for Sphere {
         }
 
         vec![Intersection::new(t1, self), Intersection::new(t2, self)]
-    }
-
-    fn transform_inverse(&self) -> Matrix4 {
-        self.transform.inverse()
-    }
-
-    fn material(&self) -> &Material {
-        &self.material
-    }
-
-    fn local_normal_at(&self, local_point: &Tuple4) -> Tuple4 {
-        *local_point - point(0.0, 0.0, 0.0)
     }
 }
 

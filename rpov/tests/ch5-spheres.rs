@@ -1,12 +1,11 @@
 mod test {
-    use rpov::floats::consts::PI;
+    use rpov::{floats::consts::PI, shapes::Intersectable};
 
     use num_traits::ToPrimitive;
     use rpov::{
         canvas::Canvas,
         colors::COLOR_RED,
         matrices::Matrix4,
-        shapes::ShapeFunctions,
         spheres::Sphere,
         transformations::{rotation_z, scaling, shearing},
         tuples::Tuple4,

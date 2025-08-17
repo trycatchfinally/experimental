@@ -14,3 +14,12 @@ pub mod spheres;
 pub mod transformations;
 pub mod tuples;
 pub mod world;
+
+#[macro_export]
+macro_rules! assert_same_object {
+    ($a:expr, $b:expr) => {
+        let a_ptr = ($a) as *const _ as *const ();
+        let b_ptr = ($b) as *const _ as *const ();
+        assert_eq!(a_ptr, b_ptr, "Objects do not have the same memory address");
+    };
+}

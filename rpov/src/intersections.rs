@@ -1,15 +1,26 @@
 use std::fmt::Debug;
 
-use crate::{floats::Float, spheres::Sphere};
-// You can still derive Copy and Clone, as the reference is copyable.
-#[derive(Copy, Clone, PartialEq, Debug)]
+use crate::{
+    floats::Float,
+    planes::Plane,
+    shapes::{ShapeFunctions, TestShape},
+    spheres::Sphere,
+};
+
+pub trait Shape: ShapeFunctions + Debug {}
+
+impl Shape for Sphere {}
+impl Shape for Plane {}
+impl Shape for TestShape {}
+
+#[derive(Copy, Clone, Debug)]
 pub struct Intersection<'a> {
     pub t: Float,
-    pub object: &'a Sphere,
+    pub object: &'a dyn Shape,
 }
 
 impl<'a> Intersection<'a> {
-    pub fn new(t: Float, object: &'a Sphere) -> Self {
+    pub fn new(t: Float, object: &'a dyn Shape) -> Self {
         Self { t, object }
     }
 }
@@ -24,11 +35,16 @@ pub fn hit<'a>(intersections: &[Intersection<'a>]) -> Option<Intersection<'a>> {
 
 #[cfg(test)]
 mod tests {
+
+    use crate::assert_same_object;
     use std::vec;
 
     use super::*;
     use crate::{
-        rays::ray, shapes::ShapeFunctions, spheres::Sphere, tuples::point, tuples::vector,
+        rays::ray,
+        shapes::Intersectable,
+        spheres::Sphere,
+        tuples::{point, vector},
     };
 
     // Scenario: An intersection encapsulates t and object
@@ -41,7 +57,7 @@ mod tests {
         let s = Sphere::new();
         let i = Intersection::new(3.5, &s);
         assert_eq!(i.t, 3.5);
-        assert_eq!(i.object, &s);
+        assert_same_object!(i.object, &s);
     }
 
     // Scenario: Aggregating intersections
@@ -76,8 +92,8 @@ mod tests {
         let s = Sphere::new();
         let xs = s.intersect(r);
         assert_eq!(xs.len(), 2);
-        assert_eq!(xs[0].object, &s);
-        assert_eq!(xs[1].object, &s);
+        assert_same_object!(xs[0].object, &s);
+        assert_same_object!(xs[1].object, &s);
     }
 
     // Scenario: The hit, when all intersections have positive t
@@ -93,8 +109,9 @@ mod tests {
         let i1 = Intersection::new(1.0, &s);
         let i2 = Intersection::new(2.0, &s);
         let xs = vec![i2, i1];
-        let i = hit(&xs);
-        assert_eq!(i, Some(i1));
+        let i = hit(&xs).unwrap();
+        assert_eq!(i.t, i1.t);
+        assert_same_object!(i.object, i1.object);
     }
 
     // Scenario: The hit, when some intersections have negative t
@@ -110,8 +127,9 @@ mod tests {
         let i1 = Intersection::new(-1.0, &s);
         let i2 = Intersection::new(1.0, &s);
         let xs = vec![i2, i1];
-        let i = hit(&xs);
-        assert_eq!(i, Some(i2));
+        let i = hit(&xs).unwrap();
+        assert_eq!(i.t, i2.t);
+        assert_same_object!(i.object, i2.object);
     }
 
     // Scenario: The hit, when all intersections have negative t
@@ -128,7 +146,7 @@ mod tests {
         let i2 = Intersection::new(-1.0, &s);
         let xs = vec![i2, i1];
         let i = hit(&xs);
-        assert_eq!(i, None);
+        assert!(i.is_none());
     }
 
     // Scenario: The hit is always the lowest nonnegative intersection
@@ -148,10 +166,9 @@ mod tests {
         let i3 = Intersection::new(-3.0, &s);
         let i4 = Intersection::new(2.0, &s);
         let xs = vec![i1, i2, i3, i4];
-        let i = hit(&xs);
-        assert_eq!(i, Some(i4));
-        assert_eq!(i.unwrap().t, 2.0);
-        assert_eq!(i.unwrap().object, &s);
+        let i = hit(&xs).unwrap();
+        assert_eq!(i.t, 2.0);
+        assert_same_object!(i.object, &s);
     }
 
     // Scenario: Precomputing the state of an intersection
@@ -162,7 +179,7 @@ mod tests {
         let i = Intersection::new(4.0, &shape);
         let comps = i.prepare_computations(r);
         assert_eq!(comps.t, i.t);
-        assert_eq!(comps.object, i.object);
+        assert_same_object!(comps.object, i.object);
         assert_eq!(comps.point, point(0.0, 0.0, -1.0));
         assert_eq!(comps.eyev, vector(0.0, 0.0, -1.0));
         assert_eq!(comps.normalv, vector(0.0, 0.0, -1.0));

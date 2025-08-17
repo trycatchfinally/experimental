@@ -4,11 +4,11 @@ use crate::{
     canvas::Canvas,
     colors::Color,
     floats::{EPSILON, Float},
-    intersections::{Intersection, hit},
+    intersections::{Intersection, Shape, hit},
     lighting::{PointLight, point_light},
     materials::Material,
     rays::Ray,
-    shapes::ShapeFunctions,
+    shapes::Intersectable,
     spheres::Sphere,
     transformations::scaling,
     tuples::{Tuple4, point},
@@ -21,7 +21,7 @@ pub struct World {
 
 pub struct Computations<'a> {
     pub t: Float,
-    pub object: &'a Sphere,
+    pub object: &'a dyn Shape,
     pub point: Tuple4,
     pub eyev: Tuple4,
     pub normalv: Tuple4,

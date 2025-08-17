@@ -6,10 +6,9 @@ mod test {
         canvas::Canvas,
         intersections::hit,
         lighting::{lighting, point_light},
-        shapes::ShapeFunctions,
+        shapes::Intersectable,
         spheres::Sphere,
-        tuples::Tuple4,
-        tuples::point,
+        tuples::{Tuple4, point},
     };
 
     fn run_example(name: &str, canvas_pixels: usize) {
