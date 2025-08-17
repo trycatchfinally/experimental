@@ -51,6 +51,7 @@ const MAX_RECURSION_DEPTH: u32 = 3;
 
 impl World {
     pub fn new() -> Self {
+        RECURSION_DEPTH.with(|depth| assert_eq!(depth.get(), 0));
         Self {
             objects: vec![],
             light: None,

@@ -93,6 +93,13 @@ impl Intersectable<Sphere> for Sphere {
     }
 }
 
+pub fn glass_sphere() -> Sphere {
+    let mut s = Sphere::new();
+    s.material.transparency = 1.0;
+    s.material.refractive_index = 1.5;
+    s
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -240,5 +247,18 @@ mod tests {
         let s = Sphere::with_transform(translation(5.0, 0.0, 0.0));
         let xs = s.intersect(r);
         assert_eq!(xs.len(), 0);
+    }
+
+    //   Scenario: A helper for producing a sphere with a glassy material
+    //   Given s ← glass_sphere()
+    //   Then s.transform = identity_matrix
+    //     And s.material.transparency = 1.0
+    //     And s.material.refractive_index = 1.5
+    #[test]
+    fn a_helper_for_producing_a_sphere_with_a_glassy_material() {
+        let s = glass_sphere();
+        assert_eq!(s.transform, Matrix4::identity());
+        assert_eq!(s.material.transparency, 1.0);
+        assert_eq!(s.material.refractive_index, 1.5);
     }
 }

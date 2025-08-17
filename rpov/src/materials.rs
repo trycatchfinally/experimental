@@ -9,6 +9,8 @@ pub struct Material {
     pub specular: Float,
     pub shininess: Float,
     pub reflective: Float,
+    pub transparency: Float,
+    pub refractive_index: Float,
 }
 
 impl Default for Material {
@@ -27,6 +29,8 @@ impl Material {
             specular: 0.9,
             shininess: 200.0,
             reflective: 0.0,
+            transparency: 0.0,
+            refractive_index: 1.0,
         }
     }
 }
@@ -123,5 +127,16 @@ mod tests {
     fn reflectivity_for_the_default_material() {
         let m = Material::new();
         assert_eq!(m.reflective, 0.0);
+    }
+
+    // Scenario: Transparency and Refractive Index for the default material
+    //   Given m ← material()
+    //   Then m.transparency = 0.0
+    //     And m.refractive_index = 1.0
+    #[test]
+    fn transparency_and_refractive_index_for_the_default_material() {
+        let m = Material::new();
+        assert_eq!(m.transparency, 0.0);
+        assert_eq!(m.refractive_index, 1.0);
     }
 }
