@@ -53,14 +53,7 @@ mod test {
                 let normal = hit.object.normal_at(&point);
                 let eye = -r.direction;
                 let in_shadow = false;
-                let color = lighting(
-                    &hit.object.material(),
-                    &light,
-                    point,
-                    eye,
-                    normal,
-                    in_shadow,
-                );
+                let color = lighting(hit.object.material(), &light, point, eye, normal, in_shadow);
                 c.write_pixel(x, y, color);
             }
         }
