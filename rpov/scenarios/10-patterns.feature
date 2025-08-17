@@ -56,7 +56,7 @@ Scenario: The default pattern transformation
   Given pattern ← test_pattern()
   Then pattern.transform = identity_matrix
 
-Scenario: Assigning a transformation
+Scenario: Assigning a transformation to a pattern
   Given pattern ← test_pattern()
   When set_pattern_transform(pattern, translation(1, 2, 3))
   Then pattern.transform = translation(1, 2, 3)

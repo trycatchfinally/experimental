@@ -103,12 +103,12 @@ mod tests {
         assert_eq!(s.transform, Matrix4::identity());
     }
 
-    // Scenario: Assigning a transformation
+    // Scenario: Assigning a transformation to a shape
     //   Given s ← test_shape()
     //   When set_transform(s, translation(2, 3, 4))
     //   Then s.transform = translation(2, 3, 4)
     #[test]
-    fn assigning_a_transformation() {
+    fn assigning_a_transformation_to_a_shape() {
         let mut s = test_shape();
         set_transform(&mut s, translation(2.0, 3.0, 4.0));
         matrices::check(s.transform, translation(2.0, 3.0, 4.0));

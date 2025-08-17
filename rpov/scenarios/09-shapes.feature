@@ -4,7 +4,7 @@ Scenario: The default transformation
   Given s ← test_shape()
   Then s.transform = identity_matrix
 
-Scenario: Assigning a transformation
+Scenario: Assigning a transformation to a shape
   Given s ← test_shape()
   When set_transform(s, translation(2, 3, 4))
   Then s.transform = translation(2, 3, 4)
