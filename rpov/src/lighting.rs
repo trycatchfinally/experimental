@@ -1,4 +1,5 @@
 use crate::colors::{COLOR_BLACK, Color};
+use crate::intersections::Shape;
 use crate::materials::Material;
 use crate::tuples::{PointOrVector, Tuple4};
 
@@ -21,6 +22,7 @@ pub fn point_light(position: Tuple4, intensity: Color) -> PointLight {
 
 pub fn lighting(
     material: &Material,
+    object: &dyn Shape,
     light: &PointLight,
     position: Tuple4,
     eyev: Tuple4,
@@ -28,7 +30,7 @@ pub fn lighting(
     in_shadow: bool,
 ) -> Color {
     let c = if material.pattern.is_some() {
-        material.pattern.unwrap().stripe_at(position)
+        material.pattern.unwrap().stripe_at_object(object, position)
     } else {
         material.color
     };
@@ -80,6 +82,7 @@ mod tests {
     use super::*;
     use crate::colors::Color;
     use crate::materials::Material;
+    use crate::spheres::Sphere;
     use crate::tuples::{point, vector};
 
     // Scenario: A point light has a position and intensity
@@ -109,7 +112,15 @@ mod tests {
         let normalv = vector(0.0, 0.0, -1.0);
         let light = point_light(point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let in_shadow = false;
-        let result = lighting(&m, &light, position, eyev, normalv, in_shadow);
+        let result = lighting(
+            &m,
+            &Sphere::new(),
+            &light,
+            position,
+            eyev,
+            normalv,
+            in_shadow,
+        );
         assert_eq!(result, Color::new(1.9, 1.9, 1.9));
     }
 
@@ -122,7 +133,15 @@ mod tests {
         let normalv = vector(0.0, 0.0, -1.0);
         let light = point_light(point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let in_shadow = false;
-        let result = lighting(&m, &light, position, eyev, normalv, in_shadow);
+        let result = lighting(
+            &m,
+            &Sphere::new(),
+            &light,
+            position,
+            eyev,
+            normalv,
+            in_shadow,
+        );
         assert_eq!(result, Color::new(1.0, 1.0, 1.0));
     }
 
@@ -134,7 +153,15 @@ mod tests {
         let normalv = vector(0.0, 0.0, -1.0);
         let light = point_light(point(0.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let in_shadow = false;
-        let result = lighting(&m, &light, position, eyev, normalv, in_shadow);
+        let result = lighting(
+            &m,
+            &Sphere::new(),
+            &light,
+            position,
+            eyev,
+            normalv,
+            in_shadow,
+        );
         assert_eq!(result, Color::new(0.736_396_1, 0.736_396_1, 0.736_396_1));
     }
 
@@ -147,7 +174,15 @@ mod tests {
         let normalv = vector(0.0, 0.0, -1.0);
         let light = point_light(point(0.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let in_shadow = false;
-        let result = lighting(&m, &light, position, eyev, normalv, in_shadow);
+        let result = lighting(
+            &m,
+            &Sphere::new(),
+            &light,
+            position,
+            eyev,
+            normalv,
+            in_shadow,
+        );
         assert_eq!(result, Color::new(1.636_396, 1.636_396, 1.636_396));
     }
 
@@ -159,7 +194,15 @@ mod tests {
         let normalv = vector(0.0, 0.0, -1.0);
         let light = point_light(point(0.0, 0.0, 10.0), Color::new(1.0, 1.0, 1.0));
         let in_shadow = false;
-        let result = lighting(&m, &light, position, eyev, normalv, in_shadow);
+        let result = lighting(
+            &m,
+            &Sphere::new(),
+            &light,
+            position,
+            eyev,
+            normalv,
+            in_shadow,
+        );
         assert_eq!(result, Color::new(0.1, 0.1, 0.1));
     }
 }

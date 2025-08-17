@@ -39,6 +39,7 @@ impl Material {
 mod tests {
     use super::*;
     use crate::colors::Color;
+    use crate::spheres::Sphere;
     use crate::tuples::point;
 
     fn test_setup() -> (Material, crate::tuples::Tuple4) {
@@ -100,7 +101,15 @@ mod tests {
             crate::colors::Color::new(1.0, 1.0, 1.0),
         );
         let in_shadow = true;
-        let result = crate::lighting::lighting(&m, &light, position, eyev, normalv, in_shadow);
+        let result = crate::lighting::lighting(
+            &m,
+            &Sphere::new(),
+            &light,
+            position,
+            eyev,
+            normalv,
+            in_shadow,
+        );
 
         assert_eq!(result, crate::colors::Color::new(0.1, 0.1, 0.1));
     }

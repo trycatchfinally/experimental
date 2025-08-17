@@ -114,7 +114,7 @@ mod tests {
         matrices::check(s.transform, translation(2.0, 3.0, 4.0));
     }
 
-    // Scenario: The default material
+    // Scenario: The default material for a shape
     //   Given s ← test_shape()
     //   When m ← s.material
     //   Then m = material()

@@ -20,6 +20,11 @@ mod test {
         let mut c = Canvas::new(canvas_pixels, canvas_pixels);
         let mut shape = Sphere::new();
         shape.material.color = rpov::colors::Color::new(1.0, 0.2, 1.0);
+        shape.material.pattern = Some(rpov::patterns::StripePattern {
+            a: rpov::colors::Color::new(1.0, 0.2, 1.0),
+            b: rpov::colors::Color::new(0.2, 1.0, 1.0),
+            transform: rpov::transformations::rotation_y(0.6),
+        });
 
         let light_position = point(-10.0, 10.0, -10.0);
         let light_color = rpov::colors::Color::new(1.0, 1.0, 1.0);
@@ -32,7 +37,6 @@ mod test {
             .unwrap()
             .progress_chars("#>- "));
         bar.set_message(format!("Rendering {path}"));
-
         for y in 0..canvas_pixels {
             bar.inc(1);
             let world_y = half - pixel_size * y.to_f32().unwrap();
@@ -52,7 +56,15 @@ mod test {
                 let normal = hit.object.normal_at(&point);
                 let eye = -r.direction;
                 let in_shadow = false;
-                let color = lighting(hit.object.material(), &light, point, eye, normal, in_shadow);
+                let color = lighting(
+                    hit.object.material(),
+                    &shape,
+                    &light,
+                    point,
+                    eye,
+                    normal,
+                    in_shadow,
+                );
                 c.write_pixel(x, y, color);
             }
         }
@@ -70,6 +82,6 @@ mod test {
     #[test]
     #[cfg(not(debug_assertions))]
     fn release_generation() {
-        run_example("release", 1600);
+        run_example("release_", 1600);
     }
 }

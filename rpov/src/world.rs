@@ -59,6 +59,7 @@ impl World {
         let in_shadow = self.is_shadowed(comps.over_point);
         crate::lighting::lighting(
             comps.object.material(),
+            comps.object,
             light,
             comps.over_point,
             comps.eyev,
