@@ -2,6 +2,7 @@ use crate::intersections::Intersection;
 use crate::materials::Material;
 use crate::matrices::Matrix4;
 use crate::rays::Ray;
+use crate::shapes::ShapeFunctions;
 use crate::tuples::Tuple4;
 use crate::tuples::point;
 use std::fmt;
@@ -50,9 +51,10 @@ impl Sphere {
             material: Material::new(),
         }
     }
-
-    pub fn intersect<'a>(&'a self, r: Ray) -> Vec<Intersection<'a>> {
-        let local_ray = r.transform(self.transform.inverse());
+}
+impl ShapeFunctions for Sphere {
+    fn local_intersect<'a>(&'a self, local_ray: Ray) -> Vec<Intersection<'a>> {
+        // let local_ray = r.transform(self.transform.inverse());
         let sphere_to_ray = local_ray.origin - point(0.0, 0.0, 0.0);
 
         let a = local_ray.direction.dot(local_ray.direction);
@@ -75,12 +77,12 @@ impl Sphere {
         vec![Intersection::new(t1, self), Intersection::new(t2, self)]
     }
 
-    pub fn normal_at(&self, world_point: &Tuple4) -> Tuple4 {
-        let object_point = self.transform.inverse() * *world_point;
-        let object_normal = object_point - point(0.0, 0.0, 0.0);
-        let mut world_normal = self.transform.inverse().transpose() * object_normal;
-        world_normal.w = 0.0; // Make it a vector
-        world_normal.normalize()
+    fn transform_inverse(&self) -> Matrix4 {
+        self.transform.inverse()
+    }
+
+    fn local_normal_at(&self, local_point: &Tuple4) -> Tuple4 {
+        *local_point - point(0.0, 0.0, 0.0)
     }
 }
 

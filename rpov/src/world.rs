@@ -8,6 +8,7 @@ use crate::{
     lighting::{PointLight, point_light},
     materials::Material,
     rays::Ray,
+    shapes::ShapeFunctions,
     spheres::Sphere,
     transformations::scaling,
     tuples::{Tuple4, point},

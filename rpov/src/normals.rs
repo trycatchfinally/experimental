@@ -4,11 +4,11 @@ mod tests {
 
     use crate::floats::Float;
     use crate::floats::consts::{FRAC_1_SQRT_2, PI};
+    use crate::shapes::ShapeFunctions;
     use crate::spheres::Sphere;
     use crate::transformations::{rotation_z, scaling, translation};
     use crate::tuples::check_tuple;
     use crate::tuples::{point, vector};
-
     // Scenario: The normal on a sphere at a point on the x axis
     //   Given s ← sphere()
     //   When n ← normal_at(s, point(1, 0, 0))
@@ -69,8 +69,8 @@ mod tests {
     // Scenario: Computing the normal on a translated sphere
     //   Given s ← sphere()
     //     And set_transform(s, translation(0, 1, 0))
-    //   When n ← normal_at(s, point(0, 1.70711, -0.70711))
-    //   Then n = vector(0, 0.70711, -0.70711)
+    //   When n ← normal_at(s, point(0, 1.70711, -floats::FRAC_1_SQRT_2))
+    //   Then n = vector(0, floats::FRAC_1_SQRT_2, -floats::FRAC_1_SQRT_2)
     #[test]
     fn test_computing_normal_on_translated_sphere() {
         let s = Sphere::with_transform(translation(0.0, 1.0, 0.0));

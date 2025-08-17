@@ -6,6 +6,7 @@ mod test {
         canvas::Canvas,
         intersections::hit,
         lighting::{lighting, point_light},
+        shapes::ShapeFunctions,
         spheres::Sphere,
         tuples::Tuple4,
         tuples::point,

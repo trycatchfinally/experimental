@@ -29,7 +29,9 @@ pub fn hit<'a>(intersections: &[Intersection<'a>]) -> Option<Intersection<'a>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{rays::ray, spheres::Sphere, tuples::point, tuples::vector};
+    use crate::{
+        rays::ray, shapes::ShapeFunctions, spheres::Sphere, tuples::point, tuples::vector,
+    };
 
     // Scenario: An intersection encapsulates t and object
     //   Given s ← sphere()

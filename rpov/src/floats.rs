@@ -17,6 +17,8 @@ pub const SQRT_2: Float = consts::SQRT_2;
 // avoids "acne"
 pub const EPSILON: Float = 0.0015;
 
+pub const FRAC_1_SQRT_2: Float = consts::FRAC_1_SQRT_2;
+
 pub fn check_float(a: Float, b: Float) {
     assert!((a - b).abs() < EPSILON);
 }

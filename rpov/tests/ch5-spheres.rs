@@ -6,6 +6,7 @@ mod test {
         canvas::Canvas,
         colors::COLOR_RED,
         matrices::Matrix4,
+        shapes::ShapeFunctions,
         spheres::Sphere,
         transformations::{rotation_z, scaling, shearing},
         tuples::Tuple4,

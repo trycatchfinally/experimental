@@ -1,59 +1,83 @@
+use std::cell::RefCell;
+
+use crate::intersections::Intersection;
 use crate::materials::Material;
 use crate::matrices::Matrix4;
 use crate::rays::Ray;
-use crate::tuples::Tuple4;
+use crate::tuples::{Tuple4, point};
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Shape {
+pub struct TestShape {
     pub transform: Matrix4,
     pub material: Material,
-    pub saved_ray: Option<Ray>,
+    pub saved_ray: RefCell<Option<Ray>>,
 }
 
-impl Default for Shape {
+impl Default for TestShape {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Shape {
+impl TestShape {
     pub fn new() -> Self {
-        Shape {
+        TestShape {
             transform: Matrix4::identity(),
             material: Material::new(),
-            saved_ray: None,
+            saved_ray: RefCell::new(None),
         }
     }
-
-    pub fn intersect(&mut self, ray: Ray) {
-        let local_ray = ray.transform(self.transform.inverse());
-        self.saved_ray = Some(local_ray);
+}
+pub trait ShapeFunctions {
+    fn intersect<'a>(&'a self, ray: Ray) -> Vec<Intersection<'a>> {
+        let local_ray = ray.transform(self.transform_inverse());
+        self.local_intersect(local_ray)
     }
 
-    pub fn normal_at(&self, world_point: Tuple4) -> Tuple4 {
-        let local_point = self.transform.inverse() * world_point;
-        let local_normal = crate::tuples::vector(local_point.x, local_point.y, local_point.z);
-        let mut world_normal = self.transform.inverse().transpose() * local_normal;
+    fn normal_at(&self, world_point: &Tuple4) -> Tuple4 {
+        let ti = self.transform_inverse();
+        let local_point = ti * *world_point;
+        let local_normal = self.local_normal_at(&local_point);
+        let mut world_normal = ti.transpose() * local_normal;
         world_normal.w = 0.0;
         world_normal.normalize()
+    }
+
+    fn transform_inverse(&self) -> Matrix4;
+    fn local_intersect<'a>(&'a self, local_ray: Ray) -> Vec<Intersection<'a>>;
+    fn local_normal_at(&self, local_point: &Tuple4) -> Tuple4;
+}
+
+impl ShapeFunctions for TestShape {
+    fn transform_inverse(&self) -> Matrix4 {
+        self.transform.inverse()
+    }
+
+    fn local_intersect<'a>(&'a self, local_ray: Ray) -> Vec<Intersection<'a>> {
+        *self.saved_ray.borrow_mut() = Some(local_ray);
+        vec![]
+    }
+
+    fn local_normal_at(&self, world_point: &Tuple4) -> Tuple4 {
+        point(world_point.x, world_point.y, world_point.z)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::floats::{PI, SQRT_2};
+    use crate::floats::{FRAC_1_SQRT_2, PI, SQRT_2};
     use crate::materials::Material;
     use crate::matrices::{self, Matrix4};
     use crate::rays::ray;
     use crate::transformations::{rotation_z, scaling, translation};
     use crate::tuples::{check_tuple, point, vector};
 
-    fn test_shape() -> Shape {
-        Shape::new()
+    fn test_shape() -> TestShape {
+        TestShape::new()
     }
 
-    fn set_transform(shape: &mut Shape, transform: Matrix4) {
+    fn set_transform(shape: &mut TestShape, transform: Matrix4) {
         shape.transform = transform;
     }
 
@@ -116,7 +140,7 @@ mod tests {
         let mut s = test_shape();
         set_transform(&mut s, scaling(2.0, 2.0, 2.0));
         s.intersect(r);
-        let saved_ray = s.saved_ray.unwrap();
+        let saved_ray = s.saved_ray.borrow().unwrap();
         check_tuple(saved_ray.origin, point(0.0, 0.0, -2.5));
         check_tuple(saved_ray.direction, vector(0.0, 0.0, 0.5));
     }
@@ -134,7 +158,7 @@ mod tests {
         let mut s = test_shape();
         set_transform(&mut s, translation(5.0, 0.0, 0.0));
         s.intersect(r);
-        let saved_ray = s.saved_ray.unwrap();
+        let saved_ray = s.saved_ray.borrow().unwrap();
         assert_eq!(saved_ray.origin, point(-5.0, 0.0, -5.0));
         assert_eq!(saved_ray.direction, vector(0.0, 0.0, 1.0));
     }
@@ -142,14 +166,14 @@ mod tests {
     // Scenario: Computing the normal on a translated shape
     //   Given s ← test_shape()
     //   When set_transform(s, translation(0, 1, 0))
-    //     And n ← normal_at(s, point(0, 1.70711, -0.70711))
-    //   Then n = vector(0, 0.70711, -0.70711)
+    //     And n ← normal_at(s, point(0, 1.70711, -floats::FRAC_1_SQRT_2))
+    //   Then n = vector(0, floats::FRAC_1_SQRT_2, -floats::FRAC_1_SQRT_2)
     #[test]
     fn computing_the_normal_on_a_translated_shape() {
         let mut s = test_shape();
         set_transform(&mut s, translation(0.0, 1.0, 0.0));
-        let n = s.normal_at(point(0.0, 1.70711, -0.70711));
-        check_tuple(n, vector(0.0, 0.70711, -0.70711));
+        let n = s.normal_at(&point(0.0, 1.70711, -FRAC_1_SQRT_2));
+        check_tuple(n, vector(0.0, FRAC_1_SQRT_2, -FRAC_1_SQRT_2));
     }
 
     // Scenario: Computing the normal on a transformed shape
@@ -163,7 +187,7 @@ mod tests {
         let mut s = test_shape();
         let m = scaling(1.0, 0.5, 1.0) * rotation_z(PI / 5.0);
         set_transform(&mut s, m);
-        let n = s.normal_at(point(0.0, SQRT_2 / 2.0, -SQRT_2 / 2.0));
+        let n = s.normal_at(&point(0.0, SQRT_2 / 2.0, -SQRT_2 / 2.0));
         check_tuple(n, vector(0.0, 0.97014, -0.24254));
     }
 }
