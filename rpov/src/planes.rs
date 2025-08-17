@@ -9,8 +9,8 @@ use crate::{
 
 #[derive(PartialEq, Debug)]
 pub struct Plane {
-    transform: Matrix4,
-    material: Material,
+    pub transform: Matrix4,
+    pub material: Material,
 }
 
 impl Default for Plane {

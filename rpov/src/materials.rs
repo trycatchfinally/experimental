@@ -8,6 +8,7 @@ pub struct Material {
     pub diffuse: Float,
     pub specular: Float,
     pub shininess: Float,
+    pub reflective: Float,
 }
 
 impl Default for Material {
@@ -25,6 +26,7 @@ impl Material {
             diffuse: 0.9,
             specular: 0.9,
             shininess: 200.0,
+            reflective: 0.0,
         }
     }
 }
@@ -112,5 +114,14 @@ mod tests {
         );
 
         assert_eq!(result, crate::colors::Color::new(0.1, 0.1, 0.1));
+    }
+
+    // Scenario: Reflectivity for the default material
+    //   Given m ← material()
+    //   Then m.reflective = 0.0
+    #[test]
+    fn reflectivity_for_the_default_material() {
+        let m = Material::new();
+        assert_eq!(m.reflective, 0.0);
     }
 }

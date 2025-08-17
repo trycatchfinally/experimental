@@ -36,7 +36,7 @@ pub fn hit<'a>(intersections: &[Intersection<'a>]) -> Option<Intersection<'a>> {
 #[cfg(test)]
 mod tests {
 
-    use crate::assert_same_object;
+    use crate::{assert_same_object, floats::SQRT_2};
     use std::vec;
 
     use super::*;
@@ -192,6 +192,7 @@ mod tests {
     //   When comps ← prepare_computations(i, r)
     //   Then comps.inside = false
     #[test]
+
     fn when_the_hit_occurs_on_the_outside() {
         let r = ray(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
         let shape = Sphere::new();
@@ -220,5 +221,23 @@ mod tests {
         assert_eq!(comps.eyev, vector(0.0, 0.0, -1.0));
         assert!(comps.inside);
         assert_eq!(comps.normalv, vector(0.0, 0.0, -1.0));
+    }
+
+    // Scenario: Precomputing the reflection vector
+    //   Given shape ← plane()
+    //     And r ← ray(point(0, 1, -1), vector(0, -√2/2, √2/2))
+    //     And i ← intersection(√2, shape)
+    //   When comps ← prepare_computations(i, r)
+    //   Then comps.reflectv = vector(0, √2/2, √2/2)
+    #[test]
+    fn precomputing_the_reflection_vector() {
+        let shape = Plane::default();
+        let r = ray(
+            point(0.0, 1.0, -1.0),
+            vector(0.0, -SQRT_2 / 2.0, SQRT_2 / 2.0),
+        );
+        let i = Intersection::new(SQRT_2, &shape);
+        let comps = i.prepare_computations(r);
+        assert_eq!(comps.reflectv, vector(0.0, SQRT_2 / 2.0, SQRT_2 / 2.0));
     }
 }

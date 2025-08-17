@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use indicatif::{ProgressBar, ProgressStyle};
 
 use crate::{
@@ -27,6 +29,7 @@ pub struct Computations<'a> {
     pub normalv: Tuple4,
     pub inside: bool,
     pub over_point: Tuple4,
+    pub reflectv: Tuple4,
 }
 
 pub type Intersections<'a> = Vec<Intersection<'a>>;
@@ -92,6 +95,12 @@ impl World {
         let h = hit(&intersections);
         h.is_some() && h.unwrap().t < distance
     }
+
+    pub fn reflected_color(&self, comps: Computations) -> Color {
+        let reflect_ray = Ray::new(comps.over_point, comps.reflectv);
+        let color = self.color_at(reflect_ray);
+        color * comps.object.material().reflective
+    }
 }
 
 pub fn render(c: crate::camera::Camera, w: World) -> Canvas {
@@ -143,6 +152,7 @@ impl<'a> Intersection<'a> {
         if inside {
             normalv = -normalv;
         }
+        let reflectv = ray.direction.reflect(normalv);
         let over_point = point + normalv * EPSILON;
         Computations {
             t: self.t,
@@ -152,6 +162,7 @@ impl<'a> Intersection<'a> {
             normalv,
             inside,
             over_point,
+            reflectv,
         }
     }
 }
@@ -159,7 +170,13 @@ impl<'a> Intersection<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{floats::PI, rays::ray, transformations::scaling, tuples::vector};
+    use crate::{
+        floats::{PI, SQRT_2},
+        planes::Plane,
+        rays::ray,
+        transformations::scaling,
+        tuples::vector,
+    };
 
     // Scenario: Creating a world
     //   Given w ← world()
@@ -437,5 +454,60 @@ mod tests {
             comps.over_point
         );
         assert!(comps.point.z > comps.over_point.z);
+    }
+
+    // Scenario: The reflected color for a nonreflective material
+    //   Given w ← default_world()
+    //     And r ← ray(point(0, 0, 0), vector(0, 0, 1))
+    //     And shape ← the second object in w
+    //     And shape.material.ambient ← 1
+    //     And i ← intersection(1, shape)
+    //   When comps ← prepare_computations(i, r)
+    //     And color ← reflected_color(w, comps)
+    //   Then color = color(0, 0, 0)
+    #[test]
+    fn the_reflected_color_for_a_nonreflective_material() {
+        let w = default_world();
+        let r = ray(point(0.0, 0.0, 0.0), vector(0.0, 0.0, 1.0));
+        let mut shape = w.objects[1];
+        shape.material.ambient = 1.0;
+        todo!(
+            "let i = Intersection::new(1.0, shape);
+        let comps = i.prepare_computations(r);
+        let color = w.reflected_color(comps);
+        assert_eq!(color, Color::new(0.0, 0.0, 0.0));
+        "
+        );
+    }
+
+    // Scenario: The reflected color for a reflective material
+    //   Given w ← default_world()
+    //     And shape ← plane() with:
+    //       | material.reflective | 0.5                   |
+    //       | transform           | translation(0, -1, 0) |
+    //     And shape is added to w
+
+    #[test]
+    fn the_reflected_color_for_a_reflective_material() {
+        let w = default_world();
+        let mut shape = Plane::default();
+        shape.material.reflective = 0.5;
+        shape.transform = crate::transformations::translation(0.0, -1.0, 0.0);
+        todo!("w.objects.push(shape);");
+
+        //     And r ← ray(point(0, 0, -3), vector(0, -√2/2, √2/2))
+        let r = ray(
+            point(0.0, 0.0, -3.0),
+            vector(0.0, -SQRT_2 / 2.0, SQRT_2 / 2.0),
+        );
+        //     And i ← intersection(√2, shape)
+        let i = Intersection::new(SQRT_2, &shape);
+
+        //   When comps ← prepare_computations(i, r)
+        let comps = i.prepare_computations(r);
+        //     And color ← reflected_color(w, comps)
+        let color = w.reflected_color(comps);
+        //   Then color = color(0.19032, 0.2379, 0.14274)
+        assert_eq!(color, Color::new(0.19032, 0.2379, 0.14274));
     }
 }
