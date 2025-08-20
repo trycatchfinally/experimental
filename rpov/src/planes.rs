@@ -7,18 +7,24 @@ use crate::{
     tuples::{Tuple4, vector},
 };
 
-#[derive(PartialEq, Debug, Clone, Copy)]
+#[derive(Debug)]
 pub struct Plane {
     pub transform: Matrix4,
     pub material: Material,
 }
 
-impl Default for Plane {
-    fn default() -> Self {
+impl Plane {
+    pub fn new() -> Self {
         Self {
             transform: Matrix4::identity(),
             material: Material::new(),
         }
+    }
+}
+
+impl Default for Plane {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -66,7 +72,7 @@ mod tests {
     //     And n3 = vector(0, 1, 0)
     #[test]
     fn the_normal_of_a_plane_is_constant_everywhere() {
-        let p = Plane::default();
+        let p = Plane::new();
         let n1 = p.local_normal_at(&point(0.0, 0.0, 0.0));
         let n2 = p.local_normal_at(&point(10.0, 0.0, -10.0));
         let n3 = p.local_normal_at(&point(-5.0, 0.0, 150.0));
@@ -82,7 +88,7 @@ mod tests {
     //   Then xs is empty
     #[test]
     fn intersect_with_a_ray_parallel_to_the_plane() {
-        let p = Plane::default();
+        let p = Plane::new();
         let r = Ray::new(point(0.0, 10.0, 0.0), vector(0.0, 0.0, 1.0));
         let xs = p.local_intersect(r);
         assert!(xs.is_empty());
@@ -95,7 +101,7 @@ mod tests {
     //   Then xs is empty
     #[test]
     fn intersect_with_a_coplanar_ray() {
-        let p = Plane::default();
+        let p = Plane::new();
         let r = Ray::new(point(0.0, 0.0, 0.0), vector(0.0, 0.0, 1.0));
         let xs = p.local_intersect(r);
         assert!(xs.is_empty());
@@ -110,7 +116,7 @@ mod tests {
     //     And xs[0].object = p
     #[test]
     fn a_ray_intersecting_a_plane_from_above() {
-        let p = Plane::default();
+        let p = Plane::new();
         let r = Ray::new(point(0.0, 1.0, 0.0), vector(0.0, -1.0, 0.0));
         let xs = p.local_intersect(r);
         assert_eq!(xs.len(), 1);
@@ -127,7 +133,7 @@ mod tests {
     //     And xs[0].object = p
     #[test]
     fn a_ray_intersecting_a_plane_from_below() {
-        let p = Plane::default();
+        let p = Plane::new();
         let r = Ray::new(point(0.0, -1.0, 0.0), vector(0.0, 1.0, 0.0));
         let xs = p.local_intersect(r);
         assert_eq!(xs.len(), 1);

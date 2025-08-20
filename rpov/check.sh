@@ -3,13 +3,13 @@
 set -e
 
 run_checks() {
-  echo "Running: cargo build $@"
+  echo "Running: cargo build --all-targets $@"
   cargo build --all-targets "$@"
 
-  echo "Running: cargo test $@"
+  echo "Running: cargo test --all-targets $@"
   cargo test --all-targets "$@"
 
-  echo "Running: cargo clippy $@ -- -Dwarnings"
+  echo "Running: cargo clippy --all-targets $@ -- -Dwarnings"
   cargo clippy --all-targets "$@" -- -Dwarnings
 }
 

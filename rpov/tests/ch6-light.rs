@@ -1,5 +1,7 @@
 mod test {
 
+    use std::sync::Arc;
+
     use indicatif::{ProgressBar, ProgressStyle};
     use num_traits::ToPrimitive;
     use rpov::{
@@ -20,11 +22,11 @@ mod test {
         let mut c = Canvas::new(canvas_pixels, canvas_pixels);
         let mut shape = Sphere::new();
         shape.material.color = rpov::colors::Color::new(1.0, 0.2, 1.0);
-        shape.material.pattern = Some(rpov::patterns::StripePattern {
+        shape.material.pattern = Some(Arc::new(rpov::patterns::StripePattern {
             a: rpov::colors::Color::new(1.0, 0.2, 1.0),
             b: rpov::colors::Color::new(0.2, 1.0, 1.0),
             transform: rpov::transformations::rotation_y(0.6),
-        });
+        }));
 
         let light_position = point(-10.0, 10.0, -10.0);
         let light_color = rpov::colors::Color::new(1.0, 1.0, 1.0);

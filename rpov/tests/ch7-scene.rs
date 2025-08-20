@@ -17,21 +17,21 @@ mod tests {
         let mut floor_material = Material::new();
         floor_material.color = Color::new(1.0, 0.9, 0.9);
         floor_material.specular = 0.0;
-        floor.material = floor_material;
+        floor.material = floor_material.clone();
 
         let mut left_wall = Sphere::new();
         left_wall.transform = translation(0.0, 0.0, 5.0)
             * rotation_y(-PI / 4.0)
             * rotation_x(PI / 2.0)
             * scaling(10.0, 0.01, 10.0);
-        left_wall.material = floor.material;
+        left_wall.material = floor_material.clone();
 
         let mut right_wall = Sphere::new();
         right_wall.transform = translation(0.0, 0.0, 5.0)
             * rotation_y(PI / 4.0)
             * rotation_x(PI / 2.0)
             * scaling(10.0, 0.01, 10.0);
-        right_wall.material = floor.material;
+        right_wall.material = floor_material.clone();
 
         let mut middle = Sphere::new();
         middle.transform = translation(-0.5, 1.0, 0.5);

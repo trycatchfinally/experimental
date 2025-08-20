@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 // Feature: Patterns
 use crate::{colors::Color, intersections::Shape, matrices::Matrix4, tuples::Tuple4};
 
@@ -8,7 +10,7 @@ pub struct StripePattern {
     pub transform: Matrix4,
 }
 
-pub trait Pattern {
+pub trait Pattern: Debug {
     fn pattern_at(&self, point: crate::tuples::Tuple4) -> Color;
     fn transform_inverse(&self) -> Matrix4;
     fn pattern_at_shape(&self, object: &dyn Shape, world_point: crate::tuples::Tuple4) -> Color {
@@ -44,6 +46,14 @@ impl StripePattern {
         let pattern_point = self.transform.inverse() * object_point;
 
         self.stripe_at(pattern_point)
+    }
+}
+impl Pattern for StripePattern {
+    fn pattern_at(&self, point: crate::tuples::Tuple4) -> Color {
+        self.stripe_at(point)
+    }
+    fn transform_inverse(&self) -> Matrix4 {
+        self.transform.inverse()
     }
 }
 
@@ -162,6 +172,8 @@ impl Pattern for CheckersPattern {
 #[cfg(test)]
 mod tests {
 
+    use std::sync::Arc;
+
     use crate::{
         colors::Color,
         patterns::{
@@ -174,6 +186,7 @@ mod tests {
     fn test_pattern() -> TestPattern {
         TestPattern::new()
     }
+
     fn default_white_black_stripe() -> (Color, Color, StripePattern) {
         let white = Color::new(1.0, 1.0, 1.0);
         let black = Color::new(0.0, 0.0, 0.0);
@@ -254,10 +267,10 @@ mod tests {
     #[test]
     fn lighting_with_a_pattern_applied() {
         let mut m = crate::materials::Material::new();
-        m.pattern = Some(stripe_pattern(
+        m.pattern = Some(Arc::new(stripe_pattern(
             Color::new(1.0, 1.0, 1.0),
             Color::new(0.0, 0.0, 0.0),
-        ));
+        )));
         m.ambient = 1.0;
         m.diffuse = 0.0;
         m.specular = 0.0;

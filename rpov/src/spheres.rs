@@ -11,7 +11,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 static SPHERE_ID_COUNTER: AtomicU64 = AtomicU64::new(0);
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct Sphere {
     pub id: u64,
     pub transform: Matrix4,
@@ -104,6 +104,8 @@ pub fn glass_sphere() -> Sphere {
 mod tests {
 
     use super::*;
+    use crate::check_floats;
+    use crate::floats::SQRT_2;
     use crate::rays::ray;
     use crate::transformations::{scaling, translation};
     use crate::tuples::vector;
@@ -260,5 +262,62 @@ mod tests {
         assert_eq!(s.transform, Matrix4::identity());
         assert_eq!(s.material.transparency, 1.0);
         assert_eq!(s.material.refractive_index, 1.5);
+    }
+
+    // Scenario: The Schlick approximation under total internal reflection
+    //   Given shape ← glass_sphere()
+    //     And r ← ray(point(0, 0, √2/2), vector(0, 1, 0))
+    //     And xs ← intersections(-√2/2:shape, √2/2:shape)
+    //   When comps ← prepare_computations(xs[1], r, xs)
+    //     And reflectance ← schlick(comps)
+    //   Then reflectance = 1.0
+    #[test]
+    fn the_schlick_approximation_under_total_internal_reflection() {
+        let shape = glass_sphere();
+        let r = ray(point(0.0, 0.0, SQRT_2 / 2.0), vector(0.0, 1.0, 0.0));
+        let xs = vec![
+            Intersection::new(-SQRT_2 / 2.0, &shape),
+            Intersection::new(SQRT_2 / 2.0, &shape),
+        ];
+        let comps = xs[1].prepare_computations(r, Some(xs.clone()));
+        let reflectance = crate::lighting::schlick(&comps);
+        assert_eq!(reflectance, 1.0);
+    }
+
+    // Scenario: The Schlick approximation with a perpendicular viewing angle
+    //   Given shape ← glass_sphere()
+    //     And r ← ray(point(0, 0, 0), vector(0, 1, 0))
+    //     And xs ← intersections(-1:shape, 1:shape)
+    //   When comps ← prepare_computations(xs[1], r, xs)
+    //     And reflectance ← schlick(comps)
+    //   Then reflectance = 0.04
+    #[test]
+    fn the_schlick_approximation_with_a_perpendicular_viewing_angle() {
+        let shape = glass_sphere();
+        let r = ray(point(0.0, 0.0, 0.0), vector(0.0, 1.0, 0.0));
+        let xs = vec![
+            Intersection::new(-1.0, &shape),
+            Intersection::new(1.0, &shape),
+        ];
+        let comps = xs[1].prepare_computations(r, Some(xs.clone()));
+        let reflectance = crate::lighting::schlick(&comps);
+        check_floats!(reflectance, 0.04);
+    }
+
+    // Scenario: The Schlick approximation with small angle and n2 > n1
+    //   Given shape ← glass_sphere()
+    //     And r ← ray(point(0, 0.99, -2), vector(0, 0, 1))
+    //     And xs ← intersections(1.8589:shape)
+    //   When comps ← prepare_computations(xs[0], r, xs)
+    //     And reflectance ← schlick(comps)
+    //   Then reflectance = 0.48873
+    #[test]
+    fn the_schlick_approximation_with_small_angle_and_n2_gt_n1() {
+        let shape = glass_sphere();
+        let r = ray(point(0.0, 0.99, -2.0), vector(0.0, 0.0, 1.0));
+        let xs = vec![Intersection::new(1.8589, &shape)];
+        let comps = xs[0].prepare_computations(r, Some(xs.clone()));
+        let reflectance = crate::lighting::schlick(&comps);
+        assert!((reflectance - 0.48873).abs() < crate::floats::EPSILON);
     }
 }

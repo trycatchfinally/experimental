@@ -177,7 +177,7 @@ mod tests {
         let r = ray(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
         let shape = Sphere::new();
         let i = Intersection::new(4.0, &shape);
-        let comps = i.prepare_computations(r);
+        let comps = i.prepare_computations(r, None);
         assert_eq!(comps.t, i.t);
         assert_same_object!(comps.object, i.object);
         assert_eq!(comps.point, point(0.0, 0.0, -1.0));
@@ -185,19 +185,18 @@ mod tests {
         assert_eq!(comps.normalv, vector(0.0, 0.0, -1.0));
     }
 
-    // Scenario: When the hit occurs on the outside
+    // Scenario: The hit, when an intersection occurs on the outside
     //   Given r ← ray(point(0, 0, -5), vector(0, 0, 1))
     //     And shape ← sphere()
     //     And i ← intersection(4, shape)
     //   When comps ← prepare_computations(i, r)
     //   Then comps.inside = false
     #[test]
-
     fn when_the_hit_occurs_on_the_outside() {
         let r = ray(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
         let shape = Sphere::new();
         let i = Intersection::new(4.0, &shape);
-        let comps = i.prepare_computations(r);
+        let comps = i.prepare_computations(r, None);
         assert!(!comps.inside);
     }
 
@@ -216,7 +215,7 @@ mod tests {
         let r = ray(point(0.0, 0.0, 0.0), vector(0.0, 0.0, 1.0));
         let shape = Sphere::new();
         let i = Intersection::new(1.0, &shape);
-        let comps = i.prepare_computations(r);
+        let comps = i.prepare_computations(r, None);
         assert_eq!(comps.point, point(0.0, 0.0, 1.0));
         assert_eq!(comps.eyev, vector(0.0, 0.0, -1.0));
         assert!(comps.inside);
@@ -231,13 +230,101 @@ mod tests {
     //   Then comps.reflectv = vector(0, √2/2, √2/2)
     #[test]
     fn precomputing_the_reflection_vector() {
-        let shape = Plane::default();
+        let shape = Plane::new();
         let r = ray(
             point(0.0, 1.0, -1.0),
             vector(0.0, -SQRT_2 / 2.0, SQRT_2 / 2.0),
         );
         let i = Intersection::new(SQRT_2, &shape);
-        let comps = i.prepare_computations(r);
+        let comps = i.prepare_computations(r, None);
         assert_eq!(comps.reflectv, vector(0.0, SQRT_2 / 2.0, SQRT_2 / 2.0));
+    }
+
+    // Scenario Outline: Finding n1 and n2 at various intersections
+    //   Given A ← glass_sphere() with:
+    //       | transform                 | scaling(2, 2, 2) |
+    //       | material.refractive_index | 1.5              |
+    //     And B ← glass_sphere() with:
+    //       | transform                 | translation(0, 0, -0.25) |
+    //       | material.refractive_index | 2.0                      |
+    //     And C ← glass_sphere() with:
+    //       | transform                 | translation(0, 0, 0.25) |
+    //       | material.refractive_index | 2.5                     |
+    //     And r ← ray(point(0, 0, -4), vector(0, 0, 1))
+    //     And xs ← intersections(2:A, 2.75:B, 3.25:C, 4.75:B, 5.25:C, 6:A)
+    //   When comps ← prepare_computations(xs[<index>], r, xs)
+    //   Then comps.n1 = <n1>
+    //     And comps.n2 = <n2>
+
+    //   Examples:
+    //     | index | n1  | n2  |
+    //     | 0     | 1.0 | 1.5 |
+    //     | 1     | 1.5 | 2.0 |
+    //     | 2     | 2.0 | 2.5 |
+    //     | 3     | 2.5 | 2.5 |
+    //     | 4     | 2.5 | 1.5 |
+    //     | 5     | 1.5 | 1.0 |
+    #[test]
+    fn finding_n1_and_n2_at_various_intersections() {
+        let mut a = crate::spheres::glass_sphere();
+        a.transform = crate::transformations::scaling(2.0, 2.0, 2.0);
+        a.material.refractive_index = 1.5;
+
+        let mut b = crate::spheres::glass_sphere();
+        b.transform = crate::transformations::translation(0.0, 0.0, -0.25);
+        b.material.refractive_index = 2.0;
+
+        let mut c = crate::spheres::glass_sphere();
+        c.transform = crate::transformations::translation(0.0, 0.0, 0.25);
+        c.material.refractive_index = 2.5;
+
+        let r = ray(point(0.0, 0.0, -4.0), vector(0.0, 0.0, 1.0));
+
+        let xs = vec![
+            Intersection::new(2.0, &a),
+            Intersection::new(2.75, &b),
+            Intersection::new(3.25, &c),
+            Intersection::new(4.75, &b),
+            Intersection::new(5.25, &c),
+            Intersection::new(6.0, &a),
+        ];
+
+        let test_cases = vec![
+            (0, 1.0, 1.5),
+            (1, 1.5, 2.0),
+            (2, 2.0, 2.5),
+            (3, 2.5, 2.5),
+            (4, 2.5, 1.5),
+            (5, 1.5, 1.0),
+        ];
+
+        let sxs = Some(xs.clone());
+        for (index, expected_n1, expected_n2) in test_cases {
+            let i = &xs[index];
+            let comps = i.prepare_computations(r, sxs.clone());
+            assert_eq!(comps.n1, expected_n1, "at {index}");
+            assert_eq!(comps.n2, expected_n2, "at {index}");
+        }
+    }
+
+    // Scenario: The under point is offset below the surface
+    //   Given r ← ray(point(0, 0, -5), vector(0, 0, 1))
+    //     And shape ← glass_sphere() with:
+    //       | transform | translation(0, 0, 1) |
+    //     And i ← intersection(5, shape)
+    //     And xs ← intersections(i)
+    //   When comps ← prepare_computations(i, r, xs)
+    //   Then comps.under_point.z > EPSILON/2
+    //     And comps.point.z < comps.under_point.z
+    #[test]
+    fn the_under_point_is_offset_below_the_surface() {
+        let r = ray(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
+        let mut shape = crate::spheres::glass_sphere();
+        shape.transform = crate::transformations::translation(0.0, 0.0, 1.0);
+        let i = Intersection::new(5.0, &shape);
+        let xs = vec![i];
+        let comps = i.prepare_computations(r, Some(xs));
+        assert!(comps.under_point.z > crate::floats::EPSILON / 2.0);
+        assert!(comps.point.z < comps.under_point.z);
     }
 }

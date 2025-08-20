@@ -1,7 +1,9 @@
 use crate::colors::{COLOR_BLACK, Color};
+use crate::floats::Float;
 use crate::intersections::Shape;
 use crate::materials::Material;
 use crate::tuples::{PointOrVector, Tuple4};
+use crate::world::Computations;
 
 #[derive(Debug, PartialEq)]
 pub struct PointLight {
@@ -30,7 +32,8 @@ pub fn lighting(
     in_shadow: bool,
 ) -> Color {
     let c = if material.pattern.is_some() {
-        material.pattern.unwrap().stripe_at_object(object, position)
+        let pattern = material.pattern.as_ref().unwrap();
+        pattern.pattern_at_shape(object, position)
     } else {
         material.color
     };
@@ -75,6 +78,24 @@ pub fn lighting(
     };
 
     ambient + diffuse + specular
+}
+
+pub fn schlick(comps: &Computations) -> Float {
+    let mut cos = comps.eyev.dot(comps.normalv);
+
+    if comps.n1 > comps.n2 {
+        let n_ratio = comps.n1 / comps.n2;
+        let sin2_t = n_ratio.powi(2) * (1.0 - cos.powi(2));
+        if sin2_t > 1.0 {
+            return 1.0;
+        }
+        let cos_t = (1.0 - sin2_t).sqrt();
+        cos = cos_t;
+    }
+
+    let r0 = ((comps.n1 - comps.n2) / (comps.n1 + comps.n2)).powi(2);
+
+    r0 + (1.0 - r0) * (1.0 - cos).powi(5)
 }
 
 #[cfg(test)]
