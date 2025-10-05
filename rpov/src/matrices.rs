@@ -1,26 +1,11 @@
-use std::{
-    iter::zip,
-    ops::{Add, Div, Mul, Neg, Sub},
-};
+use std::iter::zip;
 
 use crate::{
     floats::Float,
     tuples::{Tuple4, TupleElement},
 };
 
-pub trait MatrixElement:
-    Copy
-    + Neg<Output = Self>
-    + Add<Output = Self>
-    + Mul<Output = Self>
-    + Sub<Output = Self>
-    + Div<Output = Self>
-    + From<f32>
-    + Default
-    + PartialEq
-    + TupleElement
-{
-}
+pub trait MatrixElement: TupleElement {}
 
 impl MatrixElement for Float {}
 
@@ -39,7 +24,7 @@ impl<T: MatrixElement, const N: usize> Matrix<T, N> {
         T: MatrixElement,
     {
         let mut data = [[T::default(); N]; N];
-        let one = <T as From<f32>>::from(1.0);
+        let one = T::one();
         #[allow(clippy::needless_range_loop)]
         for i in 0..N {
             data[i][i] = one;
