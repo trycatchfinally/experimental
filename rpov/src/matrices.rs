@@ -83,10 +83,7 @@ impl<T: MatrixElement, const N: usize> Matrix<T, N> {
     }
 }
 
-impl<T: MatrixElement> Matrix<T, 2>
-where
-    T: Copy + std::ops::Sub<Output = T> + std::ops::Mul<Output = T>,
-{
+impl<T: MatrixElement> Matrix<T, 2> {
     pub fn determinant(&self) -> T {
         let [[a, b], [c, d]] = self.data;
         (a * d) - (b * c)

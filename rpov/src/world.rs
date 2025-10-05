@@ -70,7 +70,7 @@ impl World {
         }
     }
 
-    pub fn intersect(&self, r: Ray) -> Intersections {
+    pub fn intersect(&self, r: Ray) -> Intersections<'_> {
         let mut all_intersections = Vec::new();
         for object in &self.objects {
             all_intersections.append(&mut object.intersect(r));
@@ -230,7 +230,7 @@ impl<'a> Intersection<'a> {
         &self,
         ray: Ray,
         xs_or_none: Option<Intersections>,
-    ) -> Computations {
+    ) -> Computations<'a> {
         let point = ray.position(self.t);
         let eyev = -ray.direction;
         let mut normalv = self.object.normal_at(&point);
