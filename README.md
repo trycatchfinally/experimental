@@ -1,10 +1,7 @@
-# Technologies to use
+# Book
 
-* git
-* https://fishshell.com/
-* https://github.com/google-gemini/gemini-cli
-* Python: https://github.com/astral-sh/uv
-* Rust
+http://raytracerchallenge.com/
 
-# Deferred for later:
-* https://github.com/jj-vcs/jj
+# Slides
+
+https://docs.google.com/presentation/d/1JANdGyJvMzOdiOeSFhaWZH3HRkBR0j-JIgXvMs9W-M0
