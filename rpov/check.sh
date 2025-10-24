@@ -15,6 +15,7 @@ run_checks() {
 
 run_checks
 run_checks --features=f64
+# run_checks --features=f64 --release
 echo ""
 echo "========================"
 echo "🎉 All checks passed! 🎉"

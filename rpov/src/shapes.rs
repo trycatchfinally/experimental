@@ -41,7 +41,6 @@ pub trait Intersectable<T: ShapeFunctions> {
 }
 
 pub trait ShapeFunctions {
-    fn transform_inverse(&self) -> Matrix4;
     fn normal_at(&self, world_point: &Tuple4) -> Tuple4 {
         let ti = self.transform_inverse();
         let local_point = ti * *world_point;
@@ -51,8 +50,9 @@ pub trait ShapeFunctions {
         world_normal.normalize()
     }
 
-    fn material(&self) -> &Material;
     fn local_normal_at(&self, local_point: &Tuple4) -> Tuple4;
+    fn material(&self) -> &Material;
+    fn transform_inverse(&self) -> Matrix4;
 }
 
 impl ShapeFunctions for TestShape {
